@@ -3310,6 +3310,179 @@ function AdminProductFormModal({
 }
 
 /* ═══════════════════════════════════════════════════════════
+   ADMIN — MODAL DE CRIAR/EDITAR CUPOM DE DESCONTO
+═══════════════════════════════════════════════════════════ */
+function AdminCouponFormModal({
+  coupon, products, onClose, onSaved, adminToken
+}: {
+  coupon: AdminCoupon | null; // null = criando novo
+  products: AdminProduct[];   // lista de produtos para escolher quais aceitam o cupom
+  onClose: () => void;
+  onSaved: () => void;
+  adminToken: string;
+}) {
+  const isEditing = !!coupon;
+  const [codigo, setCodigo] = useState(coupon?.codigo || '');
+  const [percentual, setPercentual] = useState(coupon ? String(coupon.percentual) : '');
+  const [validoAte, setValidoAte] = useState(coupon?.validoAte ? coupon.validoAte.slice(0, 10) : '');
+  const [usosMaximos, setUsosMaximos] = useState(coupon?.usosMaximos ? String(coupon.usosMaximos) : '');
+  const [active, setActive] = useState(coupon?.active !== false);
+  const [produtosSelecionados, setProdutosSelecionados] = useState<number[]>(coupon?.produtosAplicaveis || []);
+  const [productSearch, setProductSearch] = useState('');
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const toggleProduto = (id: number) => {
+    setProdutosSelecionados(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+  };
+
+  const filteredProducts = products.filter(p => !productSearch || p.title.toLowerCase().includes(productSearch.toLowerCase()));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr('');
+    if (!codigo.trim() || !percentual.trim()) { setErr('Código e percentual de desconto são obrigatórios.'); return; }
+    if (Number(percentual) <= 0 || Number(percentual) > 100) { setErr('O percentual deve ser entre 1 e 100.'); return; }
+    if (produtosSelecionados.length === 0) { setErr('Selecione ao menos um produto para o cupom.'); return; }
+
+    const payload: any = {
+      codigo: codigo.trim(),
+      percentual: Number(percentual),
+      produtosAplicaveis: produtosSelecionados,
+      validoAte: validoAte || null,
+      usosMaximos: usosMaximos ? Number(usosMaximos) : null,
+      active
+    };
+
+    setLoading(true);
+    try {
+      const url = isEditing ? `${API_BASE}/admin/cupons/${coupon!.id}` : `${API_BASE}/admin/cupons`;
+      const method = isEditing ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.erro || 'Erro ao salvar cupom.'); setLoading(false); return; }
+      onSaved();
+    } catch (error) {
+      setErr('Não foi possível conectar ao servidor.');
+      setLoading(false);
+    }
+  };
+
+  const inputStyle: React.CSSProperties = { padding:'10px 14px', background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, color:C.text, fontSize:14, outline:'none', width:'100%', boxSizing:'border-box' };
+  const labelStyle: React.CSSProperties = { color:C.textMuted, fontSize:12, marginBottom:6, display:'block' };
+
+  const focusStyle = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = C.secondary;
+    e.target.style.boxShadow = `0 0 0 3px rgba(123,47,190,0.15)`;
+  };
+  const blurStyle = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = C.border;
+    e.target.style.boxShadow = 'none';
+  };
+
+  return (
+    <div onClick={onClose}
+      style={{ position:'fixed', inset:0, zIndex:1700, background:'rgba(0,0,0,0.75)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{ width:'100%', maxWidth:520, maxHeight:'88vh', overflowY:'auto', background:'linear-gradient(160deg, #0f0f1a 0%, #0a0a0f 100%)', border:`1px solid ${C.border}`, borderRadius:20, padding:0, position:'relative', boxShadow:`0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(123,47,190,0.15), inset 0 1px 0 rgba(255,255,255,0.04)`, animation:'adminFadeIn 0.25s ease' }}>
+
+        {/* Cabeçalho do modal */}
+        <div style={{ padding:'22px 24px 18px', borderBottom:`1px solid rgba(123,47,190,0.15)`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:32, height:32, borderRadius:9, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15 }}>
+              {isEditing ? '✏️' : '🎟️'}
+            </div>
+            <div>
+              <h2 style={{ fontSize:16, fontWeight:800, color:C.textLight, margin:0 }}>{isEditing ? 'Editar Cupom' : 'Novo Cupom'}</h2>
+              <p style={{ fontSize:11, color:C.textMuted, margin:0 }}>{isEditing ? `Código: ${coupon?.codigo}` : 'Preencha os dados abaixo'}</p>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${C.border}`, color:C.textMuted, cursor:'pointer', width:30, height:30, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', transition:'background 0.15s' }}
+            onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.1)')}
+            onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.05)')}>
+            <X size={15} />
+          </button>
+        </div>
+
+        <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:14, padding:'20px 24px 24px' }}>
+          <div>
+            <label style={labelStyle}>Código do cupom *</label>
+            <input style={{ ...inputStyle, textTransform:'uppercase' }} value={codigo} onChange={e=>setCodigo(e.target.value)} placeholder="Ex: PROMO10" onFocus={focusStyle} onBlur={blurStyle} />
+          </div>
+
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+            <div>
+              <label style={labelStyle}>Desconto (%) *</label>
+              <input style={inputStyle} type="number" min="1" max="100" value={percentual} onChange={e=>setPercentual(e.target.value)} placeholder="10" onFocus={focusStyle} onBlur={blurStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Limite de usos</label>
+              <input style={inputStyle} type="number" min="1" value={usosMaximos} onChange={e=>setUsosMaximos(e.target.value.replace(/\D/g,''))} placeholder="Ilimitado" onFocus={focusStyle} onBlur={blurStyle} />
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Válido até</label>
+            <input style={inputStyle} type="date" value={validoAte} onChange={e=>setValidoAte(e.target.value)} onFocus={focusStyle} onBlur={blurStyle} />
+            <p style={{ fontSize:11, color:C.textMuted, marginTop:5 }}>Deixe em branco para um cupom sem data de expiração.</p>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Produtos aplicáveis * ({produtosSelecionados.length} selecionado{produtosSelecionados.length !== 1 ? 's' : ''})</label>
+            <input value={productSearch} onChange={e=>setProductSearch(e.target.value)} placeholder="🔍  Buscar produto..."
+              style={{ ...inputStyle, marginBottom:8 }} onFocus={focusStyle} onBlur={blurStyle} />
+            <div style={{ maxHeight:180, overflowY:'auto', border:`1px solid ${C.border}`, borderRadius:8, background:C.surface }}>
+              {filteredProducts.length === 0 && (
+                <p style={{ color:C.textMuted, fontSize:12, padding:'14px', textAlign:'center' }}>Nenhum produto encontrado.</p>
+              )}
+              {filteredProducts.slice(0, 100).map(p => (
+                <label key={p.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', borderBottom:`1px solid rgba(123,47,190,0.08)`, cursor:'pointer' }}>
+                  <input type="checkbox" checked={produtosSelecionados.includes(p.id)} onChange={() => toggleProduto(p.id)} style={{ accentColor:C.primary, width:14, height:14, cursor:'pointer' }} />
+                  <span style={{ color:C.textLight, fontSize:13, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.title}</span>
+                  <span style={{ color:C.secondary, fontSize:12, fontWeight:600 }}>{p.price}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display:'flex', alignItems:'center', gap:10, background:'rgba(123,47,190,0.06)', border:`1px solid rgba(123,47,190,0.15)`, borderRadius:10, padding:'12px 14px' }}>
+            <input type="checkbox" id="cupom-active" checked={active} onChange={e=>setActive(e.target.checked)} style={{ accentColor:C.primary, width:15, height:15, cursor:'pointer' }} />
+            <label htmlFor="cupom-active" style={{ color:C.textMuted, fontSize:13, userSelect:'none', cursor:'pointer' }}>
+              Cupom <strong style={{ color: active ? C.green : '#FF6B6B' }}>{active ? 'ativo' : 'inativo'}</strong> — {active ? 'pode ser usado no checkout' : 'bloqueado para uso'}
+            </label>
+          </div>
+
+          {err && (
+            <div style={{ background:'rgba(255,107,107,0.08)', border:'1px solid rgba(255,107,107,0.25)', borderRadius:9, padding:'10px 14px', color:'#FF6B6B', fontSize:13 }}>
+              ⚠️ {err}
+            </div>
+          )}
+
+          <div style={{ display:'flex', gap:10, marginTop:4 }}>
+            <button type="button" onClick={onClose}
+              style={{ flex:1, padding:'12px', borderRadius:10, background:'transparent', border:`1px solid ${C.border}`, color:C.textMuted, fontWeight:600, fontSize:14, cursor:'pointer', transition:'all 0.15s' }}
+              onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.05)'; (e.currentTarget as HTMLButtonElement).style.color='#fff'}}
+              onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent'; (e.currentTarget as HTMLButtonElement).style.color=C.textMuted}}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={loading}
+              style={{ flex:2, padding:'12px', borderRadius:10, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow:`0 4px 16px rgba(123,47,190,0.4)`, transition:'opacity 0.15s, transform 0.15s' }}
+              onMouseEnter={e=>{ if (!loading) (e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)' }}
+              onMouseLeave={e=>{ (e.currentTarget as HTMLButtonElement).style.transform='translateY(0)' }}>
+              {loading ? '⏳ Salvando...' : isEditing ? '✓ Salvar alterações' : '✓ Criar cupom'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    ADMIN — PAINEL (Vendas, Estatísticas, Produtos)
 ═══════════════════════════════════════════════════════════ */
 interface AdminSale {
@@ -3334,12 +3507,25 @@ interface AdminStats {
   vendasPorDia: { data: string; valor: number }[];
 }
 
+interface AdminCoupon {
+  id: string;
+  codigo: string;
+  percentual: number;
+  produtosAplicaveis: number[];
+  validoAte: string | null;
+  usosMaximos: number | null;
+  usosAtuais: number;
+  active: boolean;
+  criadoEm: string;
+}
+
 function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onClose: () => void; onLogout: () => void }) {
-  const [tab, setTab] = useState<'vendas' | 'estatisticas' | 'produtos'>('estatisticas');
+  const [tab, setTab] = useState<'vendas' | 'estatisticas' | 'produtos' | 'cupons'>('estatisticas');
 
   const [sales, setSales] = useState<AdminSale[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
   const [loadingTab, setLoadingTab] = useState(false);
   const [errTab, setErrTab] = useState('');
   const [productSearch, setProductSearch] = useState('');
@@ -3347,6 +3533,10 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [editingCoupon, setEditingCoupon] = useState<AdminCoupon | null>(null);
+  const [creatingCoupon, setCreatingCoupon] = useState(false);
+  const [deletingCouponId, setDeletingCouponId] = useState<string | null>(null);
 
   const authHeaders = { Authorization: `Bearer ${adminToken}` };
 
@@ -3403,10 +3593,35 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
     }
   };
 
+  const loadCupons = async () => {
+    setLoadingTab(true); setErrTab('');
+    try {
+      // Cupons referenciam produtos pelo ID, então garantimos que a lista de
+      // produtos também esteja carregada (para mostrar nomes na tela e no formulário).
+      const [resCupons, resProdutos] = await Promise.all([
+        fetch(`${API_BASE}/admin/cupons`, { headers: authHeaders }),
+        products.length === 0 ? fetch(`${API_BASE}/admin/produtos`, { headers: authHeaders }) : Promise.resolve(null)
+      ]);
+      if (handleAuthError(resCupons)) return;
+      const dataCupons = await resCupons.json();
+      if (!resCupons.ok) throw new Error(dataCupons.erro || 'Erro ao carregar cupons.');
+      setCoupons(dataCupons);
+      if (resProdutos) {
+        const dataProdutos = await resProdutos.json();
+        if (resProdutos.ok) setProducts(dataProdutos);
+      }
+    } catch (e: any) {
+      setErrTab(e.message || 'Erro ao carregar cupons.');
+    } finally {
+      setLoadingTab(false);
+    }
+  };
+
   useEffect(() => {
     if (tab === 'vendas') loadVendas();
     else if (tab === 'estatisticas') loadEstatisticas();
     else if (tab === 'produtos') loadProdutos();
+    else if (tab === 'cupons') loadCupons();
   }, [tab]);
 
   useEffect(() => {
@@ -3425,6 +3640,20 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
       alert('Não foi possível conectar ao servidor.');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleDeleteCoupon = async (id: string) => {
+    setDeletingCouponId(id);
+    try {
+      const res = await fetch(`${API_BASE}/admin/cupons/${id}`, { method: 'DELETE', headers: authHeaders });
+      if (handleAuthError(res)) return;
+      if (!res.ok) { const data = await res.json().catch(()=>({})); alert(data.erro || 'Erro ao remover cupom.'); return; }
+      setCoupons(prev => prev.filter(c => c.id !== id));
+    } catch {
+      alert('Não foi possível conectar ao servidor.');
+    } finally {
+      setDeletingCouponId(null);
     }
   };
 
@@ -3486,6 +3715,7 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
           ['estatisticas', '📊', 'Estatísticas'],
           ['vendas', '💸', 'Vendas'],
           ['produtos', '🎮', 'Produtos'],
+          ['cupons', '🎟️', 'Cupons'],
         ] as const).map(([key, icon, label]) => (
           <button key={key} onClick={() => setTab(key)} className="adm-tab"
             style={{
@@ -3653,6 +3883,79 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
             </div>
           </div>
         )}
+
+        {/* ───────── CUPONS ───────── */}
+        {!loadingTab && tab === 'cupons' && (
+          <div style={{ animation:'adminFadeIn 0.3s ease' }}>
+            <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap', justifyContent:'flex-end' }}>
+              <button onClick={() => setCreatingCoupon(true)}
+                style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 20px', borderRadius:10, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:`0 4px 14px rgba(123,47,190,0.4)`, transition:'opacity 0.15s, transform 0.15s' }}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)'}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(0)'}}>
+                <Plus size={16} /> Criar cupom
+              </button>
+            </div>
+
+            {coupons.length === 0 && (
+              <div style={{ textAlign:'center', padding:'60px 20px', color:C.textMuted }}>
+                <p style={{ fontSize:32, marginBottom:10 }}>🎟️</p>
+                <p style={{ fontSize:14 }}>Nenhum cupom criado ainda.</p>
+              </div>
+            )}
+
+            {coupons.length > 0 && (
+              <div style={{ overflowX:'auto', borderRadius:12, border:`1px solid ${C.border}` }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+                  <thead>
+                    <tr style={{ background:'rgba(123,47,190,0.08)' }}>
+                      {['Código','Desconto','Produtos','Validade','Usos','Status','Ações'].map(h => (
+                        <th key={h} style={{ padding:'12px 16px', color:C.textMuted, fontWeight:600, textAlign:'left', fontSize:12, textTransform:'uppercase', letterSpacing:'0.5px' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coupons.map((c, i) => {
+                      const expirado = c.validoAte ? new Date(c.validoAte) < new Date() : false;
+                      const esgotado = c.usosMaximos !== null && c.usosAtuais >= c.usosMaximos;
+                      const statusInativo = c.active === false || expirado || esgotado;
+                      let statusLabel = '● Ativo';
+                      if (c.active === false) statusLabel = '● Inativo';
+                      else if (expirado) statusLabel = '● Expirado';
+                      else if (esgotado) statusLabel = '● Esgotado';
+                      return (
+                        <tr key={c.id} className="adm-row" style={{ borderBottom:`1px solid rgba(123,47,190,0.1)`, animation:`adminSlideIn 0.25s ease ${Math.min(i,10) * 0.03}s both` }}>
+                          <td style={{ padding:'12px 16px', color:C.textLight, fontWeight:700, letterSpacing:'0.5px' }}>{c.codigo}</td>
+                          <td style={{ padding:'12px 16px', color:C.secondary, fontWeight:700 }}>{c.percentual}%</td>
+                          <td style={{ padding:'12px 16px', color:C.textMuted, fontSize:12 }}>{c.produtosAplicaveis.length} produto{c.produtosAplicaveis.length !== 1 ? 's' : ''}</td>
+                          <td style={{ padding:'12px 16px', color:C.textMuted, fontSize:12 }}>
+                            {c.validoAte ? new Date(c.validoAte + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem expiração'}
+                          </td>
+                          <td style={{ padding:'12px 16px', color:C.textMuted, fontSize:12 }}>
+                            {c.usosAtuais}{c.usosMaximos !== null ? ` / ${c.usosMaximos}` : ''}
+                          </td>
+                          <td style={{ padding:'12px 16px' }}>
+                            <span style={{ fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:20, background: !statusInativo ? 'rgba(76,175,80,0.12)' : 'rgba(255,107,107,0.12)', color: !statusInativo ? C.green : '#FF6B6B', border: `1px solid ${!statusInativo ? 'rgba(76,175,80,0.25)' : 'rgba(255,107,107,0.25)'}` }}>
+                              {statusLabel}
+                            </span>
+                          </td>
+                          <td style={{ padding:'12px 16px', whiteSpace:'nowrap' }}>
+                            <button onClick={() => setEditingCoupon(c)} className="adm-btn-edit" style={{ background:'none', border:'none', color:C.secondary, cursor:'pointer', fontSize:12, fontWeight:600, marginRight:6 }}>
+                              Editar
+                            </button>
+                            <button onClick={() => { if (confirm(`Remover o cupom "${c.codigo}"?`)) handleDeleteCoupon(c.id); }} disabled={deletingCouponId === c.id} className="adm-btn-del"
+                              style={{ background:'none', border:'none', color:'#FF6B6B', cursor: deletingCouponId===c.id ? 'not-allowed' : 'pointer', fontSize:12, fontWeight:600, opacity: deletingCouponId===c.id ? 0.5 : 1 }}>
+                              {deletingCouponId === c.id ? '...' : 'Remover'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {creatingProduct && (
@@ -3669,6 +3972,24 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
           adminToken={adminToken}
           onClose={() => setEditingProduct(null)}
           onSaved={() => { setEditingProduct(null); loadProdutos(); }}
+        />
+      )}
+      {creatingCoupon && (
+        <AdminCouponFormModal
+          coupon={null}
+          products={products}
+          adminToken={adminToken}
+          onClose={() => setCreatingCoupon(false)}
+          onSaved={() => { setCreatingCoupon(false); loadCupons(); }}
+        />
+      )}
+      {editingCoupon && (
+        <AdminCouponFormModal
+          coupon={editingCoupon}
+          products={products}
+          adminToken={adminToken}
+          onClose={() => setEditingCoupon(null)}
+          onSaved={() => { setEditingCoupon(null); loadCupons(); }}
         />
       )}
     </div>
