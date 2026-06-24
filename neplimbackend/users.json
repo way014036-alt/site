@@ -1,0 +1,50 @@
+[
+  {
+    "id": "7ec74f62-f29f-408f-aa6d-c94df0f89bc5",
+    "nome": "aska",
+    "email": "ps4hdtv@gmail.com",
+    "senhaHash": "$2b$10$QSUDyL1knITeGVOxh24p5.h6q5479tS4espWiY0H3koKlbX5kp48K",
+    "criadoEm": "2026-06-19T06:19:03.641Z"
+  },
+  {
+    "id": "d2f68888-3af0-4000-9cee-2994d4b5f9df",
+    "nome": "way",
+    "email": "way3108@gmail.com",
+    "senhaHash": "$2b$10$eqA.XlnrUkh2mzRj7MbbhOA9MXHqbT0NZx32dhaE/QHwhgw7QUT3a",
+    "compras": [],
+    "criadoEm": "2026-06-20T14:21:08.749Z"
+  },
+  {
+    "id": "b095c0eb-6a20-4bb3-9644-b91c858a0b89",
+    "nome": "aska",
+    "email": "okayda@gmail.com",
+    "senhaHash": "$2b$10$6Cl6GD5.3mj6HRPei6ftvOryAzkEOdEv64PmQ1IS.LZs7LAvRqNQ.",
+    "compras": [],
+    "criadoEm": "2026-06-21T12:46:11.350Z"
+  },
+  {
+    "id": "cc6d332e-b6e9-461c-959b-2ebc9a935e67",
+    "nome": "Aksa",
+    "email": "mzhype778@gmail.com",
+    "senhaHash": "$2b$10$3fPRWaob.eFT3j2WuFI.GeTP21Jzxv0b6Zlephr.5tgHIvUvvbF4.",
+    "compras": [
+      {
+        "id": "18def41e-ee35-4d1a-800d-6e25eb52411a",
+        "id_pagamento": "165343794230",
+        "titulo_jogo": "1x Hogwarts Legacy",
+        "valor": 0.01,
+        "status": "approved",
+        "data": "2026-06-22T20:08:51.885Z"
+      }
+    ],
+    "criadoEm": "2026-06-22T20:07:14.846Z"
+  },
+  {
+    "id": "633303d9-fcdd-4573-8d20-95d32ff594d3",
+    "nome": "aska",
+    "email": "mzhype788@gmail.com",
+    "senhaHash": "$2b$10$Uldr/cTNqOTy6.DCxY.Ww.IuCZbDvOgd8dGxeTTOnlEv6VvRlCuaS",
+    "compras": [],
+    "criadoEm": "2026-06-24T00:07:52.000Z"
+  }
+]

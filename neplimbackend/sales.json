@@ -1,0 +1,13 @@
+[
+  {
+    "id": "35f7aff7-d70b-432c-b8f2-20db6cc55440",
+    "id_pagamento": "165343794230",
+    "email_usuario": "mzhype778@gmail.com",
+    "nome_usuario": "Aksa",
+    "titulo_jogo": "1x Hogwarts Legacy",
+    "valor": 0.01,
+    "metodo": "pix",
+    "status": "approved",
+    "data": "2026-06-22T20:08:51.884Z"
+  }
+]
