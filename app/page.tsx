@@ -6,7 +6,7 @@ import { Package, ShieldCheck, CreditCard, Monitor, Key, Users, Star, CheckCircl
    NEPLIM STORE — Loja de Jogos Steam | Tema Roxo
 ═══════════════════════════════════════════════════════════ */
 
-const API_BASE = "http://localhost:3001";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001";
 
 // ⚠️ TROQUE pela sua PUBLIC KEY do Mercado Pago (painel > Suas integrações > Credenciais)
 // É diferente do MP_ACCESS_TOKEN do backend! Essa é pública e fica exposta no navegador, tudo bem.
