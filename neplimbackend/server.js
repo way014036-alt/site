@@ -40,6 +40,7 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || "neplim_admin_secret_tr
 
 const PRODUCTS_FILE = path.join(__dirname, "products.json");
 const SALES_FILE = path.join(__dirname, "sales.json");
+const COUPONS_FILE = path.join(__dirname, "coupons.json");
 
 // Carrega ou inicializa o arquivo de usuários
 function loadUsers() {
@@ -93,6 +94,24 @@ function loadSales() {
 // Salva a lista de vendas no arquivo JSON
 function saveSales(sales) {
   fs.writeFileSync(SALES_FILE, JSON.stringify(sales, null, 2));
+}
+
+// Carrega ou inicializa o arquivo de cupons de desconto
+function loadCoupons() {
+  if (!fs.existsSync(COUPONS_FILE)) {
+    fs.writeFileSync(COUPONS_FILE, JSON.stringify([]));
+  }
+  try {
+    const data = fs.readFileSync(COUPONS_FILE, "utf8");
+    return JSON.parse(data);
+  } catch (error) {
+    return [];
+  }
+}
+
+// Salva a lista de cupons no arquivo JSON
+function saveCoupons(coupons) {
+  fs.writeFileSync(COUPONS_FILE, JSON.stringify(coupons, null, 2));
 }
 
 // Registra uma venda no histórico centralizado (usado pelo painel ADM)
@@ -416,24 +435,44 @@ app.post("/criar-pagamento-cartao", async (req, res) => {
 // Criar Pagamento via Pix
 app.post("/criar-pix", async (req, res) => {
   try {
-    const { valor, emailUsuario, tituloJogo } = req.body;
+    const { valor, emailUsuario, tituloJogo, produtoId, cupom } = req.body;
 
     if (!valor || !emailUsuario || !tituloJogo) {
       return res.status(400).json({ erro: "Dados insuficientes para gerar o Pix." });
     }
 
     const uniqueId = uuidv4();
+    let valorFinal = Number(valor);
+    let cupomAplicado = null;
+
+    // Se um cupom foi informado, revalidamos tudo aqui no backend (nunca confiamos
+    // só no valor que o navegador calculou) e recalculamos o valor final.
+    if (cupom && produtoId) {
+      const codigoNormalizado = String(cupom).trim().toUpperCase();
+      const coupons = loadCoupons();
+      const cupomEncontrado = coupons.find(c => c.codigo === codigoNormalizado);
+
+      if (cupomEncontrado &&
+          cupomEncontrado.active !== false &&
+          (!cupomEncontrado.validoAte || new Date(cupomEncontrado.validoAte) >= new Date()) &&
+          (cupomEncontrado.usosMaximos === null || cupomEncontrado.usosAtuais < cupomEncontrado.usosMaximos) &&
+          cupomEncontrado.produtosAplicaveis.includes(Number(produtoId))) {
+        valorFinal = Number((valorFinal * (1 - cupomEncontrado.percentual / 100)).toFixed(2));
+        cupomAplicado = codigoNormalizado;
+      }
+    }
 
     // Criando a requisição do pagamento
     const paymentData = {
       body: {
-        transaction_amount: Number(valor),
+        transaction_amount: valorFinal,
         description: `Compra de ${tituloJogo} - Neplim Store`,
         payment_method_id: "pix",
-        // Vinculamos o e-mail do usuário e o jogo aos metadados para recuperar no Webhook
+        // Vinculamos o e-mail do usuário, o jogo e o cupom (se houver) para recuperar no Webhook
         metadata: {
           email_usuario: emailUsuario,
-          titulo_jogo: tituloJogo
+          titulo_jogo: tituloJogo,
+          cupom_aplicado: cupomAplicado
         },
         external_reference: uniqueId,
         payer: {
@@ -452,7 +491,9 @@ app.post("/criar-pix", async (req, res) => {
       status: response.status,
       qr_code: response.point_of_interaction.transaction_data.qr_code,
       qr_code_base64: response.point_of_interaction.transaction_data.qr_code_base64,
-      ticket_url: response.point_of_interaction.transaction_data.ticket_url
+      ticket_url: response.point_of_interaction.transaction_data.ticket_url,
+      valorFinal,
+      cupomAplicado
     });
   } catch (error) {
     console.error("Erro ao criar Pix:", error);
@@ -495,6 +536,22 @@ app.post("/webhook-mercadopago", async (req, res) => {
           const tituloJogo = pagamento.metadata?.titulo_jogo;
           const valorPago = pagamento.transaction_amount;
           const metodoPagamento = pagamento.payment_method_id === "pix" ? "pix" : "cartao";
+          const cupomUsado = pagamento.metadata?.cupom_aplicado;
+
+          // Incrementa o contador de usos do cupom (uma única vez por pagamento aprovado)
+          if (cupomUsado) {
+            const coupons = loadCoupons();
+            const indexCupom = coupons.findIndex(c => c.codigo === cupomUsado);
+            if (indexCupom !== -1) {
+              // Evita incrementar de novo se o webhook for reenviado pelo Mercado Pago
+              const sales = loadSales();
+              const jaContabilizado = sales.some(s => s.id_pagamento === String(paymentId));
+              if (!jaContabilizado) {
+                coupons[indexCupom].usosAtuais = (coupons[indexCupom].usosAtuais || 0) + 1;
+                saveCoupons(coupons);
+              }
+            }
+          }
 
           // Registra no histórico centralizado de vendas (painel ADM), independente
           // de o e-mail corresponder a um usuário cadastrado — a venda no Mercado
@@ -709,6 +766,166 @@ app.delete("/admin/produtos/:id", verificarTokenAdmin, (req, res) => {
   } catch (error) {
     console.error("Erro ao remover produto:", error);
     return res.status(500).json({ erro: "Erro ao remover produto." });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// PAINEL ADM — CUPONS DE DESCONTO
+// ═══════════════════════════════════════════════
+
+// Lista todos os cupons (inclusive expirados/inativos) — tela de gerenciamento
+app.get("/admin/cupons", verificarTokenAdmin, (req, res) => {
+  try {
+    const coupons = loadCoupons();
+    return res.json(coupons.slice().reverse());
+  } catch (error) {
+    console.error("Erro ao buscar cupons:", error);
+    return res.status(500).json({ erro: "Erro ao carregar cupons." });
+  }
+});
+
+// Cria um novo cupom de desconto (percentual, válido para produtos específicos)
+app.post("/admin/cupons", verificarTokenAdmin, (req, res) => {
+  try {
+    const { codigo, percentual, produtosAplicaveis, validoAte, usosMaximos, active } = req.body;
+
+    if (!codigo || !percentual) {
+      return res.status(400).json({ erro: "Código e percentual de desconto são obrigatórios." });
+    }
+    if (Number(percentual) <= 0 || Number(percentual) > 100) {
+      return res.status(400).json({ erro: "O percentual de desconto deve ser entre 1 e 100." });
+    }
+    if (!Array.isArray(produtosAplicaveis) || produtosAplicaveis.length === 0) {
+      return res.status(400).json({ erro: "Selecione ao menos um produto para o cupom." });
+    }
+
+    const codigoNormalizado = String(codigo).trim().toUpperCase();
+
+    const coupons = loadCoupons();
+    const jaExiste = coupons.some(c => c.codigo === codigoNormalizado);
+    if (jaExiste) {
+      return res.status(400).json({ erro: "Já existe um cupom com esse código." });
+    }
+
+    const novoCupom = {
+      id: uuidv4(),
+      codigo: codigoNormalizado,
+      percentual: Number(percentual),
+      // IDs dos produtos (do products.json) em que o cupom pode ser aplicado
+      produtosAplicaveis: produtosAplicaveis.map(id => Number(id)),
+      validoAte: validoAte || null, // data ISO; null = sem expiração
+      usosMaximos: usosMaximos ? Number(usosMaximos) : null, // null = ilimitado
+      usosAtuais: 0,
+      active: active !== false,
+      criadoEm: new Date().toISOString()
+    };
+
+    coupons.push(novoCupom);
+    saveCoupons(coupons);
+
+    return res.status(201).json(novoCupom);
+  } catch (error) {
+    console.error("Erro ao criar cupom:", error);
+    return res.status(500).json({ erro: "Erro ao criar cupom." });
+  }
+});
+
+// Edita um cupom existente
+app.put("/admin/cupons/:id", verificarTokenAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const coupons = loadCoupons();
+    const index = coupons.findIndex(c => String(c.id) === String(id));
+
+    if (index === -1) {
+      return res.status(404).json({ erro: "Cupom não encontrado." });
+    }
+
+    const dadosAtualizados = { ...req.body };
+    if (dadosAtualizados.codigo) {
+      dadosAtualizados.codigo = String(dadosAtualizados.codigo).trim().toUpperCase();
+    }
+    if (dadosAtualizados.produtosAplicaveis) {
+      dadosAtualizados.produtosAplicaveis = dadosAtualizados.produtosAplicaveis.map(pid => Number(pid));
+    }
+
+    // Preserva o ID e o contador de usos já realizados
+    coupons[index] = {
+      ...coupons[index],
+      ...dadosAtualizados,
+      id: coupons[index].id,
+      usosAtuais: coupons[index].usosAtuais
+    };
+    saveCoupons(coupons);
+
+    return res.json(coupons[index]);
+  } catch (error) {
+    console.error("Erro ao editar cupom:", error);
+    return res.status(500).json({ erro: "Erro ao editar cupom." });
+  }
+});
+
+// Remove um cupom
+app.delete("/admin/cupons/:id", verificarTokenAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const coupons = loadCoupons();
+    const index = coupons.findIndex(c => String(c.id) === String(id));
+
+    if (index === -1) {
+      return res.status(404).json({ erro: "Cupom não encontrado." });
+    }
+
+    coupons.splice(index, 1);
+    saveCoupons(coupons);
+
+    return res.json({ mensagem: "Cupom removido com sucesso." });
+  } catch (error) {
+    console.error("Erro ao remover cupom:", error);
+    return res.status(500).json({ erro: "Erro ao remover cupom." });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// ROTA PÚBLICA — VALIDAR CUPOM NO CHECKOUT
+// ═══════════════════════════════════════════════
+// Recebe o código digitado pelo cliente e o ID do produto no carrinho.
+// Retorna o percentual de desconto se o cupom for válido para aquele produto.
+app.post("/validar-cupom", (req, res) => {
+  try {
+    const { codigo, produtoId } = req.body;
+
+    if (!codigo || !produtoId) {
+      return res.status(400).json({ erro: "Informe o código do cupom e o produto." });
+    }
+
+    const codigoNormalizado = String(codigo).trim().toUpperCase();
+    const coupons = loadCoupons();
+    const cupom = coupons.find(c => c.codigo === codigoNormalizado);
+
+    if (!cupom) {
+      return res.status(404).json({ erro: "Cupom não encontrado." });
+    }
+    if (cupom.active === false) {
+      return res.status(400).json({ erro: "Este cupom não está mais ativo." });
+    }
+    if (cupom.validoAte && new Date(cupom.validoAte) < new Date()) {
+      return res.status(400).json({ erro: "Este cupom expirou." });
+    }
+    if (cupom.usosMaximos !== null && cupom.usosAtuais >= cupom.usosMaximos) {
+      return res.status(400).json({ erro: "Este cupom já atingiu o limite de usos." });
+    }
+    if (!cupom.produtosAplicaveis.includes(Number(produtoId))) {
+      return res.status(400).json({ erro: "Este cupom não é válido para o produto selecionado." });
+    }
+
+    return res.json({
+      codigo: cupom.codigo,
+      percentual: cupom.percentual
+    });
+  } catch (error) {
+    console.error("Erro ao validar cupom:", error);
+    return res.status(500).json({ erro: "Erro ao validar cupom." });
   }
 });
 
