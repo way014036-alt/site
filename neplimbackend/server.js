@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 // IMPORTAÇÃO DA VERSÃO 2.x.x DO MERCADO PAGO
 const { MercadoPagoConfig, Payment } = require("mercadopago");
@@ -32,6 +33,156 @@ const payment = new Payment(client);
 // e devolve o resultado por aqui mesmo.
 const PENDING_KEYS_FILE = path.join(__dirname, "pending_keys.json");
 const BOT_SYNC_SECRET = process.env.BOT_SYNC_SECRET || "troque_esse_segredo_em_producao";
+
+
+// ═══════════════════════════════════════════════
+// CÓDIGOS DE COMPROVANTE PARA SUPORTE NO DISCORD
+// ═══════════════════════════════════════════════
+// Estes códigos NÃO são Steam Keys. Cada pagamento aprovado recebe um código
+// NEPLIM-... único. O cliente envia esse código no ticket e o bot usa
+// /bot/validar-codigo para vinculá-lo a um usuário do Discord uma única vez.
+const SUPPORT_CODES_FILE = path.join(__dirname, "support_codes.json");
+const SUPPORT_CODE_PREFIX = "NEPLIM-";
+const SUPPORT_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+const SUPPORT_CODE_RANDOM_LENGTH = 24;
+const SUPPORT_CODE_REGEX = /^NEPLIM-[A-Z0-9]{8,128}$/;
+
+function atomicWriteJson(filePath, value) {
+  const tempPath = `${filePath}.${process.pid}.tmp`;
+  fs.writeFileSync(tempPath, JSON.stringify(value, null, 2), "utf8");
+  fs.renameSync(tempPath, filePath);
+}
+
+function loadSupportCodes() {
+  if (!fs.existsSync(SUPPORT_CODES_FILE)) {
+    atomicWriteJson(SUPPORT_CODES_FILE, []);
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(SUPPORT_CODES_FILE, "utf8"));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Erro ao carregar support_codes.json:", error);
+    return [];
+  }
+}
+
+function saveSupportCodes(codes) {
+  atomicWriteJson(SUPPORT_CODES_FILE, codes);
+}
+
+function normalizeSupportCode(code) {
+  return String(code || "").trim().toUpperCase();
+}
+
+function generateRandomSupportCode(existingCodes) {
+  const used = new Set(existingCodes.map(item => normalizeSupportCode(item.code)));
+
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    let suffix = "";
+    for (let index = 0; index < SUPPORT_CODE_RANDOM_LENGTH; index += 1) {
+      suffix += SUPPORT_CODE_ALPHABET[crypto.randomInt(0, SUPPORT_CODE_ALPHABET.length)];
+    }
+
+    const candidate = `${SUPPORT_CODE_PREFIX}${suffix}`;
+    if (!used.has(candidate)) return candidate;
+  }
+
+  throw new Error("Não foi possível gerar um código de suporte único.");
+}
+
+function findSupportCodeByPaymentId(paymentId, codes = null) {
+  const list = codes || loadSupportCodes();
+  return list.find(item => String(item.paymentId) === String(paymentId)) || null;
+}
+
+function ensureSupportCodeForPurchase({ paymentId, emailUsuario, nomeUsuario, tituloJogo, valor, metodo }) {
+  const codes = loadSupportCodes();
+  const existingIndex = codes.findIndex(item => String(item.paymentId) === String(paymentId));
+
+  if (existingIndex !== -1) {
+    const existing = codes[existingIndex];
+    let changed = false;
+    const updates = {
+      emailUsuario: emailUsuario || existing.emailUsuario || null,
+      nomeUsuario: nomeUsuario || existing.nomeUsuario || null,
+      productName: tituloJogo || existing.productName || "Jogo Digital",
+      value: Number(valor ?? existing.value ?? 0),
+      paymentMethod: metodo || existing.paymentMethod || "desconhecido",
+      paymentStatus: "approved"
+    };
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (existing[key] !== value) {
+        existing[key] = value;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      existing.updatedAt = new Date().toISOString();
+      saveSupportCodes(codes);
+    }
+    return existing;
+  }
+
+  const record = {
+    code: generateRandomSupportCode(codes),
+    paymentId: String(paymentId),
+    emailUsuario: emailUsuario || null,
+    nomeUsuario: nomeUsuario || null,
+    productName: tituloJogo || "Jogo Digital",
+    value: Number(valor) || 0,
+    paymentMethod: metodo || "desconhecido",
+    paymentStatus: "approved",
+    status: "available",
+    createdAt: new Date().toISOString(),
+    usedAt: null,
+    buyerDiscordId: null,
+    buyerDiscordUsername: null,
+    validatedByDiscordId: null,
+    validatedByDiscordUsername: null,
+    guildId: null,
+    channelId: null
+  };
+
+  codes.push(record);
+  saveSupportCodes(codes);
+  return record;
+}
+
+function syncSupportCodeIntoPurchaseFiles(record) {
+  const sales = loadSales();
+  const saleIndex = sales.findIndex(item => String(item.id_pagamento) === String(record.paymentId));
+  if (saleIndex !== -1) {
+    sales[saleIndex].support_code = record.code;
+    sales[saleIndex].support_code_status = record.status;
+    sales[saleIndex].support_code_used_by_discord_id = record.buyerDiscordId || null;
+    sales[saleIndex].support_code_used_at = record.usedAt || null;
+    saveSales(sales);
+  }
+
+  if (record.emailUsuario) {
+    const users = loadUsers();
+    const userIndex = users.findIndex(
+      user => String(user.email || "").toLowerCase() === String(record.emailUsuario).toLowerCase()
+    );
+
+    if (userIndex !== -1 && Array.isArray(users[userIndex].compras)) {
+      const purchase = users[userIndex].compras.find(
+        item => String(item.id_pagamento) === String(record.paymentId)
+      );
+
+      if (purchase) {
+        purchase.support_code = record.code;
+        purchase.support_code_status = record.status;
+        purchase.support_code_used_by_discord_id = record.buyerDiscordId || null;
+        purchase.support_code_used_at = record.usedAt || null;
+        saveUsers(users);
+      }
+    }
+  }
+}
 
 function loadPendingKeys() {
   if (!fs.existsSync(PENDING_KEYS_FILE)) {
@@ -146,6 +297,100 @@ app.post("/bot/entregar-key", verificarSegredoBot, (req, res) => {
   }
 });
 
+
+// Valida e consome um código de comprovante enviado pelo cliente no ticket.
+// A leitura e a gravação são síncronas dentro desta requisição, evitando que
+// duas validações concorrentes usem o mesmo código nesta instância do servidor.
+app.post("/bot/validar-codigo", verificarSegredoBot, (req, res) => {
+  try {
+    const codigo = normalizeSupportCode(req.body?.codigo);
+    const discordUserId = String(req.body?.discordUserId || "").trim();
+    const discordUsername = String(req.body?.discordUsername || "Usuário não informado").trim();
+    const validadoPorId = String(req.body?.validadoPorId || "").trim();
+    const validadoPorUsername = String(req.body?.validadoPorUsername || "Validador não informado").trim();
+    const guildId = String(req.body?.guildId || "").trim();
+    const channelId = String(req.body?.channelId || "").trim();
+
+    if (!SUPPORT_CODE_REGEX.test(codigo)) {
+      return res.status(400).json({
+        status: "invalid",
+        message: "Formato de código inválido."
+      });
+    }
+
+    if (!/^\d{15,25}$/.test(discordUserId)) {
+      return res.status(400).json({
+        status: "invalid",
+        message: "discordUserId inválido."
+      });
+    }
+
+    const codes = loadSupportCodes();
+    const index = codes.findIndex(item => normalizeSupportCode(item.code) === codigo);
+
+    if (index === -1) {
+      return res.status(404).json({
+        status: "invalid",
+        message: "Código não encontrado ou não pertence a uma compra aprovada."
+      });
+    }
+
+    const record = codes[index];
+    const sale = loadSales().find(
+      item => String(item.id_pagamento) === String(record.paymentId)
+    );
+
+    if (record.paymentStatus !== "approved" || (sale && sale.status !== "approved")) {
+      return res.status(422).json({
+        status: "invalid",
+        message: "A compra ligada a este código não está aprovada."
+      });
+    }
+
+    if (record.status === "used" || record.buyerDiscordId) {
+      return res.status(409).json({
+        status: "already_activated",
+        message: "Este código já foi validado anteriormente.",
+        buyerDiscordId: record.buyerDiscordId,
+        buyerName: record.buyerDiscordUsername,
+        orderId: record.paymentId,
+        productName: record.productName,
+        activatedAt: record.usedAt
+      });
+    }
+
+    record.status = "used";
+    record.usedAt = new Date().toISOString();
+    record.buyerDiscordId = discordUserId;
+    record.buyerDiscordUsername = discordUsername;
+    record.validatedByDiscordId = validadoPorId || null;
+    record.validatedByDiscordUsername = validadoPorUsername || null;
+    record.guildId = guildId || null;
+    record.channelId = channelId || null;
+    record.updatedAt = record.usedAt;
+
+    codes[index] = record;
+    saveSupportCodes(codes);
+    syncSupportCodeIntoPurchaseFiles(record);
+
+    return res.status(200).json({
+      status: "validated",
+      message: "Código válido e vinculado ao comprador no Discord.",
+      buyerDiscordId: record.buyerDiscordId,
+      buyerName: record.buyerDiscordUsername,
+      orderId: record.paymentId,
+      productName: record.productName,
+      activatedAt: record.usedAt
+    });
+  } catch (error) {
+    console.error("Erro ao validar código de suporte:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Erro interno ao validar o código."
+    });
+  }
+});
+
 // ═══════════════════════════════════════════════
 // SISTEMA DE USUÁRIOS (persistência em arquivo JSON)
 // ═══════════════════════════════════════════════
@@ -239,7 +484,7 @@ function saveCoupons(coupons) {
 }
 
 // Registra uma venda no histórico centralizado (usado pelo painel ADM)
-function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, valor, idPagamento, metodo, steamKey }) {
+function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, valor, idPagamento, metodo, steamKey, supportCode }) {
   const sales = loadSales();
   const jaExiste = sales.some(s => s.id_pagamento === String(idPagamento));
   if (jaExiste) return;
@@ -253,6 +498,10 @@ function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, val
     metodo: metodo || "desconhecido",
     status: "approved",
     steam_key: steamKey || null,
+    support_code: supportCode || null,
+    support_code_status: supportCode ? "available" : null,
+    support_code_used_by_discord_id: null,
+    support_code_used_at: null,
     data: new Date().toISOString()
   });
   saveSales(sales);
@@ -513,7 +762,7 @@ app.get("/minhas-compras", verificarToken, (req, res) => {
 // Criar Pagamento via Cartão de Crédito/Débito
 app.post("/criar-pagamento-cartao", async (req, res) => {
   try {
-    const { token, payment_method_id, issuer_id, installments, valor, emailUsuario, tituloJogo, cpf } = req.body;
+    const { token, payment_method_id, issuer_id, installments, valor, emailUsuario, tituloJogo, cpf, appId } = req.body;
 
     if (!token || !payment_method_id || !valor || !emailUsuario || !tituloJogo) {
       return res.status(400).json({ erro: "Dados insuficientes para gerar o pagamento." });
@@ -531,7 +780,8 @@ app.post("/criar-pagamento-cartao", async (req, res) => {
         issuer_id: issuer_id ? Number(issuer_id) : undefined,
         metadata: {
           email_usuario: emailUsuario,
-          titulo_jogo: tituloJogo
+          titulo_jogo: tituloJogo,
+          app_id: appId !== undefined && appId !== null ? String(appId) : null
         },
         external_reference: uniqueId,
         payer: {
@@ -637,10 +887,31 @@ app.get("/status-pagamento/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const pagamento = await payment.get({ id });
+
+    let supportRecord = findSupportCodeByPaymentId(pagamento.id);
+    if (pagamento.status === "approved" && !supportRecord) {
+      const emailUsuario = pagamento.metadata?.email_usuario;
+      const users = loadUsers();
+      const user = emailUsuario
+        ? users.find(item => String(item.email || "").toLowerCase() === String(emailUsuario).toLowerCase())
+        : null;
+
+      supportRecord = ensureSupportCodeForPurchase({
+        paymentId: pagamento.id,
+        emailUsuario,
+        nomeUsuario: user?.nome || null,
+        tituloJogo: pagamento.metadata?.titulo_jogo,
+        valor: pagamento.transaction_amount,
+        metodo: pagamento.payment_method_id === "pix" ? "pix" : "cartao"
+      });
+      syncSupportCodeIntoPurchaseFiles(supportRecord);
+    }
+
     return res.json({
       id: pagamento.id,
       status: pagamento.status,
-      status_detail: pagamento.status_detail
+      status_detail: pagamento.status_detail,
+      codigo_suporte: pagamento.status === "approved" ? supportRecord?.code || null : null
     });
   } catch (error) {
     console.error("Erro ao consultar status do pagamento:", error);
@@ -709,6 +980,15 @@ app.post("/webhook-mercadopago", async (req, res) => {
             : null;
           if (userEncontradoParaNome) nomeUsuarioEncontrado = userEncontradoParaNome.nome;
 
+          const supportRecord = ensureSupportCodeForPurchase({
+            paymentId,
+            emailUsuario,
+            nomeUsuario: nomeUsuarioEncontrado,
+            tituloJogo,
+            valor: valorPago,
+            metodo: metodoPagamento
+          });
+
           registrarVendaCentralizada({
             emailUsuario,
             nomeUsuario: nomeUsuarioEncontrado,
@@ -716,7 +996,8 @@ app.post("/webhook-mercadopago", async (req, res) => {
             valor: valorPago,
             idPagamento: paymentId,
             metodo: metodoPagamento,
-            steamKey: null
+            steamKey: null,
+            supportCode: supportRecord.code
           });
 
           if (emailUsuario) {
@@ -740,6 +1021,10 @@ app.post("/webhook-mercadopago", async (req, res) => {
                   valor: valorPago,
                   status: "approved",
                   steam_key: null,
+                  support_code: supportRecord.code,
+                  support_code_status: "available",
+                  support_code_used_by_discord_id: null,
+                  support_code_used_at: null,
                   data: new Date().toISOString()
                 });
 
@@ -750,6 +1035,9 @@ app.post("/webhook-mercadopago", async (req, res) => {
               console.log(`Aviso: Pagamento aprovado mas usuário correspondente (${emailUsuario}) não foi localizado.`);
             }
           }
+
+          // Garante que vendas/compras já existentes também recebam o mesmo código.
+          syncSupportCodeIntoPurchaseFiles(supportRecord);
         }
       }
     }
@@ -1154,6 +1442,30 @@ app.post("/validar-cupom", (req, res) => {
     return res.status(500).json({ erro: "Erro ao validar cupom." });
   }
 });
+
+// Cria códigos para vendas aprovadas antigas que ainda não possuam comprovante.
+function backfillApprovedSupportCodes() {
+  try {
+    const sales = loadSales();
+    for (const sale of sales) {
+      if (sale.status !== "approved" || !sale.id_pagamento) continue;
+
+      const record = ensureSupportCodeForPurchase({
+        paymentId: sale.id_pagamento,
+        emailUsuario: sale.email_usuario,
+        nomeUsuario: sale.nome_usuario,
+        tituloJogo: sale.titulo_jogo,
+        valor: sale.valor,
+        metodo: sale.metodo
+      });
+      syncSupportCodeIntoPurchaseFiles(record);
+    }
+  } catch (error) {
+    console.error("Erro ao criar códigos para vendas antigas:", error);
+  }
+}
+
+backfillApprovedSupportCodes();
 
 // Inicialização do servidor
 const PORT = process.env.PORT || 3001;
