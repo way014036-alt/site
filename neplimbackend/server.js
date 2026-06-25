@@ -149,7 +149,7 @@ async function gerarChaveShadowKeys(appId, quantidade = 1) {
 }
 
 // Registra uma venda no histórico centralizado (usado pelo painel ADM)
-function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, valor, idPagamento, metodo }) {
+function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, valor, idPagamento, metodo, chave }) {
   const sales = loadSales();
   const jaExiste = sales.some(s => s.id_pagamento === String(idPagamento));
   if (jaExiste) return;
@@ -162,6 +162,7 @@ function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, val
     valor: Number(valor) || 0,
     metodo: metodo || "desconhecido",
     status: "approved",
+    chave: chave || null,
     data: new Date().toISOString()
   });
   saveSales(sales);
@@ -633,7 +634,8 @@ app.post("/webhook-mercadopago", async (req, res) => {
             tituloJogo,
             valor: valorPago,
             idPagamento: paymentId,
-            metodo: metodoPagamento
+            metodo: metodoPagamento,
+            chave: chaveGerada
           });
 
           if (emailUsuario) {
