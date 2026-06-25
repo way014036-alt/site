@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-// IMPORTAÇÃO DA VERSÃO 2.x.x DO MERCADO PAGO
+// MERCADO PAGO — usado somente para pagamentos; entrega do jogo é manual
 const { MercadoPagoConfig, Payment } = require("mercadopago");
 
 const app = express();
@@ -24,14 +24,11 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 
 // ═══════════════════════════════════════════════
-// FILA DE PEDIDOS DE KEY (resolvida pelo BOT DE DISCORD, não pelo backend)
+// ENTREGA MANUAL PELO DISCORD
 // ═══════════════════════════════════════════════
-// O backend NÃO fala diretamente com a ShadowKeys. Em vez disso, ele anota
-// um "pedido pendente" sempre que um pagamento é aprovado. O bot de Discord,
-// que já está rodando 24h no PC do dono e sabe gerar keys, fica perguntando
-// periodicamente ao backend se há pedidos pendentes, gera a key na ShadowKeys
-// e devolve o resultado por aqui mesmo.
-const PENDING_KEYS_FILE = path.join(__dirname, "pending_keys.json");
+// O backend NÃO gera e NÃO solicita Steam Keys de fornecedor.
+// Depois de um pagamento aprovado, ele cria somente um código NEPLIM-...
+// que o cliente apresenta em um ticket. A entrega do jogo fica manual.
 const BOT_SYNC_SECRET = process.env.BOT_SYNC_SECRET || "troque_esse_segredo_em_producao";
 
 
@@ -156,6 +153,10 @@ function syncSupportCodeIntoPurchaseFiles(record) {
   const saleIndex = sales.findIndex(item => String(item.id_pagamento) === String(record.paymentId));
   if (saleIndex !== -1) {
     sales[saleIndex].support_code = record.code;
+    // Compatibilidade com o frontend antigo, que exibe apenas o campo steam_key.
+    // O valor abaixo é um comprovante de compra, NÃO uma Steam Key.
+    sales[saleIndex].steam_key = record.code;
+    sales[saleIndex].delivery_type = "manual_ticket";
     sales[saleIndex].support_code_status = record.status;
     sales[saleIndex].support_code_used_by_discord_id = record.buyerDiscordId || null;
     sales[saleIndex].support_code_used_at = record.usedAt || null;
@@ -175,6 +176,9 @@ function syncSupportCodeIntoPurchaseFiles(record) {
 
       if (purchase) {
         purchase.support_code = record.code;
+        // Compatibilidade com a tela atual de Minhas Compras.
+        purchase.steam_key = record.code;
+        purchase.delivery_type = "manual_ticket";
         purchase.support_code_status = record.status;
         purchase.support_code_used_by_discord_id = record.buyerDiscordId || null;
         purchase.support_code_used_at = record.usedAt || null;
@@ -182,38 +186,6 @@ function syncSupportCodeIntoPurchaseFiles(record) {
       }
     }
   }
-}
-
-function loadPendingKeys() {
-  if (!fs.existsSync(PENDING_KEYS_FILE)) {
-    fs.writeFileSync(PENDING_KEYS_FILE, JSON.stringify([]));
-  }
-  try {
-    return JSON.parse(fs.readFileSync(PENDING_KEYS_FILE, "utf8"));
-  } catch {
-    return [];
-  }
-}
-
-function savePendingKeys(pedidos) {
-  fs.writeFileSync(PENDING_KEYS_FILE, JSON.stringify(pedidos, null, 2));
-}
-
-// Adiciona um novo pedido de key à fila (chamado pelo webhook quando o pagamento aprova)
-function enfileirarPedidoDeKey({ idPagamento, appId, tituloJogo, emailUsuario }) {
-  const pedidos = loadPendingKeys();
-  const jaExiste = pedidos.some(p => String(p.idPagamento) === String(idPagamento));
-  if (jaExiste) return;
-  pedidos.push({
-    idPagamento: String(idPagamento),
-    appId: String(appId),
-    tituloJogo: tituloJogo || null,
-    emailUsuario: emailUsuario || null,
-    status: "pendente", // pendente -> concluido | falhou
-    steamKey: null,
-    criadoEm: new Date().toISOString()
-  });
-  savePendingKeys(pedidos);
 }
 
 // Middleware: protege as rotas que só o bot de Discord deve acessar
@@ -225,78 +197,17 @@ function verificarSegredoBot(req, res, next) {
   next();
 }
 
-// O bot consulta esta rota periodicamente para saber se há pedidos pendentes
-app.get("/bot/pedidos-pendentes", verificarSegredoBot, (req, res) => {
-  try {
-    const pedidos = loadPendingKeys();
-    return res.json(pedidos.filter(p => p.status === "pendente"));
-  } catch (error) {
-    console.error("Erro ao buscar pedidos pendentes:", error);
-    return res.status(500).json({ erro: "Erro ao buscar pedidos pendentes." });
-  }
+// Compatibilidade com versões antigas do bot: nunca há Steam Keys pendentes.
+// Isso impede que um sync_loja.py antigo continue tentando chamar fornecedores.
+app.get("/bot/pedidos-pendentes", verificarSegredoBot, (_req, res) => {
+  return res.json([]);
 });
 
-// O bot chama esta rota para entregar a key que ele mesmo gerou na ShadowKeys
-app.post("/bot/entregar-key", verificarSegredoBot, (req, res) => {
-  try {
-    const { idPagamento, steamKey, falhou, motivoFalha } = req.body;
-
-    if (!idPagamento) {
-      return res.status(400).json({ erro: "idPagamento é obrigatório." });
-    }
-
-    const pedidos = loadPendingKeys();
-    const index = pedidos.findIndex(p => String(p.idPagamento) === String(idPagamento));
-    if (index === -1) {
-      return res.status(404).json({ erro: "Pedido não encontrado." });
-    }
-
-    if (falhou) {
-      pedidos[index].status = "falhou";
-      pedidos[index].motivoFalha = motivoFalha || "Erro desconhecido ao gerar a key.";
-      savePendingKeys(pedidos);
-      console.error(`Bot reportou falha ao gerar key para o pagamento ${idPagamento}: ${pedidos[index].motivoFalha}`);
-      return res.json({ mensagem: "Falha registrada." });
-    }
-
-    if (!steamKey) {
-      return res.status(400).json({ erro: "steamKey é obrigatório quando não houve falha." });
-    }
-
-    pedidos[index].status = "concluido";
-    pedidos[index].steamKey = steamKey;
-    savePendingKeys(pedidos);
-
-    // Propaga a key para o histórico de vendas e para a conta do cliente,
-    // exatamente como fazíamos quando o backend gerava a key sozinho.
-    const sales = loadSales();
-    const venda = sales.find(s => s.id_pagamento === String(idPagamento));
-    if (venda) {
-      venda.steam_key = steamKey;
-      saveSales(sales);
-    }
-
-    const emailUsuario = pedidos[index].emailUsuario;
-    if (emailUsuario) {
-      const users = loadUsers();
-      const indexUsuario = users.findIndex(u => u.email.toLowerCase() === emailUsuario.toLowerCase());
-      if (indexUsuario !== -1 && users[indexUsuario].compras) {
-        const compra = users[indexUsuario].compras.find(c => c.id_pagamento === String(idPagamento));
-        if (compra) {
-          compra.steam_key = steamKey;
-          saveUsers(users);
-        }
-      }
-    }
-
-    console.log(`Bot entregou a key do pagamento ${idPagamento} com sucesso.`);
-    return res.json({ mensagem: "Key registrada com sucesso." });
-  } catch (error) {
-    console.error("Erro ao receber key do bot:", error);
-    return res.status(500).json({ erro: "Erro ao registrar key entregue pelo bot." });
-  }
+app.post("/bot/entregar-key", verificarSegredoBot, (_req, res) => {
+  return res.status(410).json({
+    erro: "Entrega automática desativada. A entrega agora é manual pelo ticket do Discord."
+  });
 });
-
 
 // Valida e consome um código de comprovante enviado pelo cliente no ticket.
 // A leitura e a gravação são síncronas dentro desta requisição, evitando que
@@ -497,8 +408,11 @@ function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, val
     valor: Number(valor) || 0,
     metodo: metodo || "desconhecido",
     status: "approved",
-    steam_key: steamKey || null,
+    // Quando há código de suporte, ele ocupa temporariamente o campo antigo
+    // para o frontend atual conseguir exibi-lo sem uma alteração imediata.
+    steam_key: supportCode || steamKey || null,
     support_code: supportCode || null,
+    delivery_type: supportCode ? "manual_ticket" : "legacy",
     support_code_status: supportCode ? "available" : null,
     support_code_used_by_discord_id: null,
     support_code_used_at: null,
@@ -752,7 +666,22 @@ app.get("/minhas-compras", verificarToken, (req, res) => {
       return res.status(404).json({ erro: "Usuário não encontrado." });
     }
 
-    return res.json(usuario.compras || []);
+    const compras = (usuario.compras || []).map(compra => {
+      const codigoSuporte = compra.support_code || null;
+      return {
+        ...compra,
+        codigo_suporte: codigoSuporte,
+        support_code: codigoSuporte,
+        // Compatibilidade com o frontend atual. Não é uma Steam Key.
+        steam_key: codigoSuporte || compra.steam_key || null,
+        delivery_type: codigoSuporte ? "manual_ticket" : (compra.delivery_type || "legacy"),
+        mensagem_entrega: codigoSuporte
+          ? "Abra um ticket no Discord e envie este código para receber o jogo manualmente."
+          : null
+      };
+    });
+
+    return res.json(compras);
   } catch (error) {
     console.error("Erro ao buscar compras:", error);
     return res.status(500).json({ erro: "Erro ao carregar o histórico de compras." });
@@ -911,7 +840,14 @@ app.get("/status-pagamento/:id", async (req, res) => {
       id: pagamento.id,
       status: pagamento.status,
       status_detail: pagamento.status_detail,
-      codigo_suporte: pagamento.status === "approved" ? supportRecord?.code || null : null
+      codigo_suporte: pagamento.status === "approved" ? supportRecord?.code || null : null,
+      support_code: pagamento.status === "approved" ? supportRecord?.code || null : null,
+      // Compatibilidade com o frontend atual. Este valor NÃO é uma Steam Key.
+      steam_key: pagamento.status === "approved" ? supportRecord?.code || null : null,
+      delivery_type: pagamento.status === "approved" ? "manual_ticket" : null,
+      mensagem_entrega: pagamento.status === "approved"
+        ? "Abra um ticket no Discord e envie o código NEPLIM para receber o jogo manualmente."
+        : null
     });
   } catch (error) {
     console.error("Erro ao consultar status do pagamento:", error);
@@ -936,7 +872,6 @@ app.post("/webhook-mercadopago", async (req, res) => {
           // Extraímos as informações salvas lá na rota /criar-pix ou /criar-pagamento-cartao
           const emailUsuario = pagamento.metadata?.email_usuario;
           const tituloJogo = pagamento.metadata?.titulo_jogo;
-          const appIdComprado = pagamento.metadata?.app_id;
           const valorPago = pagamento.transaction_amount;
           const metodoPagamento = pagamento.payment_method_id === "pix" ? "pix" : "cartao";
           const cupomUsado = pagamento.metadata?.cupom_aplicado;
@@ -955,20 +890,8 @@ app.post("/webhook-mercadopago", async (req, res) => {
               }
             }
           }
-
-          // Em vez de chamar a ShadowKeys diretamente, colocamos um pedido na fila.
-          // O bot de Discord (rodando 24h no PC do dono) vai buscar esse pedido,
-          // gerar a key de verdade na ShadowKeys, e devolver pelo endpoint /bot/entregar-key.
-          if (appIdComprado) {
-            enfileirarPedidoDeKey({
-              idPagamento: paymentId,
-              appId: appIdComprado,
-              tituloJogo,
-              emailUsuario
-            });
-          } else {
-            console.error(`Pagamento ${paymentId} aprovado sem appId nos metadados — key não pôde ser solicitada ao bot.`);
-          }
+          // Nenhuma Steam Key é gerada automaticamente.
+          // O código de suporte abaixo será entregue ao cliente para abrir um ticket.
 
           // Registra no histórico centralizado de vendas (painel ADM), independente
           // de o e-mail corresponder a um usuário cadastrado — a venda no Mercado
@@ -1020,8 +943,11 @@ app.post("/webhook-mercadopago", async (req, res) => {
                   titulo_jogo: tituloJogo || "Jogo Digital",
                   valor: valorPago,
                   status: "approved",
-                  steam_key: null,
+                  // O frontend atual lê steam_key; aqui guardamos o código do ticket.
+                  // Não é uma Steam Key de ativação.
+                  steam_key: supportRecord.code,
                   support_code: supportRecord.code,
+                  delivery_type: "manual_ticket",
                   support_code_status: "available",
                   support_code_used_by_discord_id: null,
                   support_code_used_at: null,
