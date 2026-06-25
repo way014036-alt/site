@@ -23,48 +23,128 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 
 // ═══════════════════════════════════════════════
-// CONFIGURAÇÃO DA SHADOWKEYS (geração automática de Steam Keys)
+// FILA DE PEDIDOS DE KEY (resolvida pelo BOT DE DISCORD, não pelo backend)
 // ═══════════════════════════════════════════════
-const SHADOWKEYS_API_KEY = process.env.SHADOWKEYS_API_KEY;
-const SHADOWKEYS_BASE_URL = "https://revenda.shadowkeys.com.br/api/v1";
+// O backend NÃO fala diretamente com a ShadowKeys. Em vez disso, ele anota
+// um "pedido pendente" sempre que um pagamento é aprovado. O bot de Discord,
+// que já está rodando 24h no PC do dono e sabe gerar keys, fica perguntando
+// periodicamente ao backend se há pedidos pendentes, gera a key na ShadowKeys
+// e devolve o resultado por aqui mesmo.
+const PENDING_KEYS_FILE = path.join(__dirname, "pending_keys.json");
+const BOT_SYNC_SECRET = process.env.BOT_SYNC_SECRET || "troque_esse_segredo_em_producao";
 
-// Gera 1 key na ShadowKeys para o appId informado.
-// Retorna o objeto da key em caso de sucesso, ou null se algo falhar
-// (a venda já foi aprovada de qualquer forma — nunca travamos o pagamento por isso,
-// só registramos o erro para o admin resolver manualmente depois).
-async function gerarKeyShadowKeys(appId) {
-  if (!SHADOWKEYS_API_KEY) {
-    console.error("SHADOWKEYS_API_KEY não configurada — pulando geração automática de key.");
-    return null;
+function loadPendingKeys() {
+  if (!fs.existsSync(PENDING_KEYS_FILE)) {
+    fs.writeFileSync(PENDING_KEYS_FILE, JSON.stringify([]));
   }
-  if (!appId) {
-    console.error("appId ausente — não é possível gerar key na ShadowKeys.");
-    return null;
-  }
-
   try {
-    const response = await fetch(`${SHADOWKEYS_BASE_URL}/keys/generate`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${SHADOWKEYS_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ appId: String(appId), quantity: 1 })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.keys || data.keys.length === 0) {
-      console.error("ShadowKeys: falha ao gerar key:", data);
-      return null;
-    }
-
-    return data.keys[0]; // { id, code, gameIds, gameNames, isCombo, chargedCents }
-  } catch (error) {
-    console.error("Erro ao chamar a API da ShadowKeys:", error);
-    return null;
+    return JSON.parse(fs.readFileSync(PENDING_KEYS_FILE, "utf8"));
+  } catch {
+    return [];
   }
 }
+
+function savePendingKeys(pedidos) {
+  fs.writeFileSync(PENDING_KEYS_FILE, JSON.stringify(pedidos, null, 2));
+}
+
+// Adiciona um novo pedido de key à fila (chamado pelo webhook quando o pagamento aprova)
+function enfileirarPedidoDeKey({ idPagamento, appId, tituloJogo, emailUsuario }) {
+  const pedidos = loadPendingKeys();
+  const jaExiste = pedidos.some(p => String(p.idPagamento) === String(idPagamento));
+  if (jaExiste) return;
+  pedidos.push({
+    idPagamento: String(idPagamento),
+    appId: String(appId),
+    tituloJogo: tituloJogo || null,
+    emailUsuario: emailUsuario || null,
+    status: "pendente", // pendente -> concluido | falhou
+    steamKey: null,
+    criadoEm: new Date().toISOString()
+  });
+  savePendingKeys(pedidos);
+}
+
+// Middleware: protege as rotas que só o bot de Discord deve acessar
+function verificarSegredoBot(req, res, next) {
+  const segredo = req.headers["x-bot-secret"];
+  if (!segredo || segredo !== BOT_SYNC_SECRET) {
+    return res.status(401).json({ erro: "Não autorizado." });
+  }
+  next();
+}
+
+// O bot consulta esta rota periodicamente para saber se há pedidos pendentes
+app.get("/bot/pedidos-pendentes", verificarSegredoBot, (req, res) => {
+  try {
+    const pedidos = loadPendingKeys();
+    return res.json(pedidos.filter(p => p.status === "pendente"));
+  } catch (error) {
+    console.error("Erro ao buscar pedidos pendentes:", error);
+    return res.status(500).json({ erro: "Erro ao buscar pedidos pendentes." });
+  }
+});
+
+// O bot chama esta rota para entregar a key que ele mesmo gerou na ShadowKeys
+app.post("/bot/entregar-key", verificarSegredoBot, (req, res) => {
+  try {
+    const { idPagamento, steamKey, falhou, motivoFalha } = req.body;
+
+    if (!idPagamento) {
+      return res.status(400).json({ erro: "idPagamento é obrigatório." });
+    }
+
+    const pedidos = loadPendingKeys();
+    const index = pedidos.findIndex(p => String(p.idPagamento) === String(idPagamento));
+    if (index === -1) {
+      return res.status(404).json({ erro: "Pedido não encontrado." });
+    }
+
+    if (falhou) {
+      pedidos[index].status = "falhou";
+      pedidos[index].motivoFalha = motivoFalha || "Erro desconhecido ao gerar a key.";
+      savePendingKeys(pedidos);
+      console.error(`Bot reportou falha ao gerar key para o pagamento ${idPagamento}: ${pedidos[index].motivoFalha}`);
+      return res.json({ mensagem: "Falha registrada." });
+    }
+
+    if (!steamKey) {
+      return res.status(400).json({ erro: "steamKey é obrigatório quando não houve falha." });
+    }
+
+    pedidos[index].status = "concluido";
+    pedidos[index].steamKey = steamKey;
+    savePendingKeys(pedidos);
+
+    // Propaga a key para o histórico de vendas e para a conta do cliente,
+    // exatamente como fazíamos quando o backend gerava a key sozinho.
+    const sales = loadSales();
+    const venda = sales.find(s => s.id_pagamento === String(idPagamento));
+    if (venda) {
+      venda.steam_key = steamKey;
+      saveSales(sales);
+    }
+
+    const emailUsuario = pedidos[index].emailUsuario;
+    if (emailUsuario) {
+      const users = loadUsers();
+      const indexUsuario = users.findIndex(u => u.email.toLowerCase() === emailUsuario.toLowerCase());
+      if (indexUsuario !== -1 && users[indexUsuario].compras) {
+        const compra = users[indexUsuario].compras.find(c => c.id_pagamento === String(idPagamento));
+        if (compra) {
+          compra.steam_key = steamKey;
+          saveUsers(users);
+        }
+      }
+    }
+
+    console.log(`Bot entregou a key do pagamento ${idPagamento} com sucesso.`);
+    return res.json({ mensagem: "Key registrada com sucesso." });
+  } catch (error) {
+    console.error("Erro ao receber key do bot:", error);
+    return res.status(500).json({ erro: "Erro ao registrar key entregue pelo bot." });
+  }
+});
 
 // ═══════════════════════════════════════════════
 // SISTEMA DE USUÁRIOS (persistência em arquivo JSON)
@@ -605,21 +685,18 @@ app.post("/webhook-mercadopago", async (req, res) => {
             }
           }
 
-          // Busca o appId do produto comprado (para gerar a key correta na ShadowKeys)
-          let steamKeyGerada = null;
+          // Em vez de chamar a ShadowKeys diretamente, colocamos um pedido na fila.
+          // O bot de Discord (rodando 24h no PC do dono) vai buscar esse pedido,
+          // gerar a key de verdade na ShadowKeys, e devolver pelo endpoint /bot/entregar-key.
           if (appIdComprado) {
-            const products = loadProducts();
-            const produtoComprado = products.find(p => String(p.appId) === String(appIdComprado));
-            if (produtoComprado && produtoComprado.appId) {
-              const resultadoKey = await gerarKeyShadowKeys(produtoComprado.appId);
-              if (resultadoKey) {
-                steamKeyGerada = resultadoKey.code;
-              } else {
-                console.error(`Falha ao gerar key para o pagamento ${paymentId} (appId ${produtoComprado.appId}). Será necessário gerar manualmente.`);
-              }
-            } else {
-              console.error(`Produto com appId ${appIdComprado} não encontrado no catálogo — key não pôde ser gerada automaticamente.`);
-            }
+            enfileirarPedidoDeKey({
+              idPagamento: paymentId,
+              appId: appIdComprado,
+              tituloJogo,
+              emailUsuario
+            });
+          } else {
+            console.error(`Pagamento ${paymentId} aprovado sem appId nos metadados — key não pôde ser solicitada ao bot.`);
           }
 
           // Registra no histórico centralizado de vendas (painel ADM), independente
@@ -639,7 +716,7 @@ app.post("/webhook-mercadopago", async (req, res) => {
             valor: valorPago,
             idPagamento: paymentId,
             metodo: metodoPagamento,
-            steamKey: steamKeyGerada
+            steamKey: null
           });
 
           if (emailUsuario) {
@@ -662,7 +739,7 @@ app.post("/webhook-mercadopago", async (req, res) => {
                   titulo_jogo: tituloJogo || "Jogo Digital",
                   valor: valorPago,
                   status: "approved",
-                  steam_key: steamKeyGerada || null,
+                  steam_key: null,
                   data: new Date().toISOString()
                 });
 
