@@ -23,6 +23,50 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 
 // ═══════════════════════════════════════════════
+// CONFIGURAÇÃO DA SHADOWKEYS (geração automática de Steam Keys)
+// ═══════════════════════════════════════════════
+const SHADOWKEYS_API_KEY = process.env.SHADOWKEYS_API_KEY;
+const SHADOWKEYS_BASE_URL = "https://revenda.shadowkeys.com.br/api/v1";
+
+// Gera 1 key na ShadowKeys para o appId informado.
+// Retorna o objeto da key em caso de sucesso, ou null se algo falhar
+// (a venda já foi aprovada de qualquer forma — nunca travamos o pagamento por isso,
+// só registramos o erro para o admin resolver manualmente depois).
+async function gerarKeyShadowKeys(appId) {
+  if (!SHADOWKEYS_API_KEY) {
+    console.error("SHADOWKEYS_API_KEY não configurada — pulando geração automática de key.");
+    return null;
+  }
+  if (!appId) {
+    console.error("appId ausente — não é possível gerar key na ShadowKeys.");
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${SHADOWKEYS_BASE_URL}/keys/generate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SHADOWKEYS_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ appId: String(appId), quantity: 1 })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.keys || data.keys.length === 0) {
+      console.error("ShadowKeys: falha ao gerar key:", data);
+      return null;
+    }
+
+    return data.keys[0]; // { id, code, gameIds, gameNames, isCombo, chargedCents }
+  } catch (error) {
+    console.error("Erro ao chamar a API da ShadowKeys:", error);
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════
 // SISTEMA DE USUÁRIOS (persistência em arquivo JSON)
 // ═══════════════════════════════════════════════
 const USERS_FILE = path.join(__dirname, "users.json");
@@ -115,7 +159,7 @@ function saveCoupons(coupons) {
 }
 
 // Registra uma venda no histórico centralizado (usado pelo painel ADM)
-function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, valor, idPagamento, metodo }) {
+function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, valor, idPagamento, metodo, steamKey }) {
   const sales = loadSales();
   const jaExiste = sales.some(s => s.id_pagamento === String(idPagamento));
   if (jaExiste) return;
@@ -128,6 +172,7 @@ function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, val
     valor: Number(valor) || 0,
     metodo: metodo || "desconhecido",
     status: "approved",
+    steam_key: steamKey || null,
     data: new Date().toISOString()
   });
   saveSales(sales);
@@ -435,7 +480,7 @@ app.post("/criar-pagamento-cartao", async (req, res) => {
 // Criar Pagamento via Pix
 app.post("/criar-pix", async (req, res) => {
   try {
-    const { valor, emailUsuario, tituloJogo, produtoId, cupom } = req.body;
+    const { valor, emailUsuario, tituloJogo, appId, cupom } = req.body;
 
     if (!valor || !emailUsuario || !tituloJogo) {
       return res.status(400).json({ erro: "Dados insuficientes para gerar o Pix." });
@@ -445,9 +490,14 @@ app.post("/criar-pix", async (req, res) => {
     let valorFinal = Number(valor);
     let cupomAplicado = null;
 
+    // Localizamos o produto do catálogo pelo appId (identificador da Steam),
+    // que é o dado que o frontend já tem disponível na vitrine de jogos.
+    const products = loadProducts();
+    const produtoComprado = appId ? products.find(p => Number(p.appId) === Number(appId)) : null;
+
     // Se um cupom foi informado, revalidamos tudo aqui no backend (nunca confiamos
     // só no valor que o navegador calculou) e recalculamos o valor final.
-    if (cupom && produtoId) {
+    if (cupom && produtoComprado) {
       const codigoNormalizado = String(cupom).trim().toUpperCase();
       const coupons = loadCoupons();
       const cupomEncontrado = coupons.find(c => c.codigo === codigoNormalizado);
@@ -456,7 +506,7 @@ app.post("/criar-pix", async (req, res) => {
           cupomEncontrado.active !== false &&
           (!cupomEncontrado.validoAte || new Date(cupomEncontrado.validoAte) >= new Date()) &&
           (cupomEncontrado.usosMaximos === null || cupomEncontrado.usosAtuais < cupomEncontrado.usosMaximos) &&
-          cupomEncontrado.produtosAplicaveis.includes(Number(produtoId))) {
+          (cupomEncontrado.validoParaTodos || cupomEncontrado.produtosAplicaveis.includes(Number(produtoComprado.id)))) {
         valorFinal = Number((valorFinal * (1 - cupomEncontrado.percentual / 100)).toFixed(2));
         cupomAplicado = codigoNormalizado;
       }
@@ -468,10 +518,11 @@ app.post("/criar-pix", async (req, res) => {
         transaction_amount: valorFinal,
         description: `Compra de ${tituloJogo} - Neplim Store`,
         payment_method_id: "pix",
-        // Vinculamos o e-mail do usuário, o jogo e o cupom (se houver) para recuperar no Webhook
+        // Vinculamos o e-mail do usuário, o jogo, o appId (para gerar a key depois) e o cupom (se houver)
         metadata: {
           email_usuario: emailUsuario,
           titulo_jogo: tituloJogo,
+          app_id: appId !== undefined && appId !== null ? String(appId) : null,
           cupom_aplicado: cupomAplicado
         },
         external_reference: uniqueId,
@@ -534,6 +585,7 @@ app.post("/webhook-mercadopago", async (req, res) => {
           // Extraímos as informações salvas lá na rota /criar-pix ou /criar-pagamento-cartao
           const emailUsuario = pagamento.metadata?.email_usuario;
           const tituloJogo = pagamento.metadata?.titulo_jogo;
+          const appIdComprado = pagamento.metadata?.app_id;
           const valorPago = pagamento.transaction_amount;
           const metodoPagamento = pagamento.payment_method_id === "pix" ? "pix" : "cartao";
           const cupomUsado = pagamento.metadata?.cupom_aplicado;
@@ -553,6 +605,23 @@ app.post("/webhook-mercadopago", async (req, res) => {
             }
           }
 
+          // Busca o appId do produto comprado (para gerar a key correta na ShadowKeys)
+          let steamKeyGerada = null;
+          if (appIdComprado) {
+            const products = loadProducts();
+            const produtoComprado = products.find(p => String(p.appId) === String(appIdComprado));
+            if (produtoComprado && produtoComprado.appId) {
+              const resultadoKey = await gerarKeyShadowKeys(produtoComprado.appId);
+              if (resultadoKey) {
+                steamKeyGerada = resultadoKey.code;
+              } else {
+                console.error(`Falha ao gerar key para o pagamento ${paymentId} (appId ${produtoComprado.appId}). Será necessário gerar manualmente.`);
+              }
+            } else {
+              console.error(`Produto com appId ${appIdComprado} não encontrado no catálogo — key não pôde ser gerada automaticamente.`);
+            }
+          }
+
           // Registra no histórico centralizado de vendas (painel ADM), independente
           // de o e-mail corresponder a um usuário cadastrado — a venda no Mercado
           // Pago aconteceu de qualquer forma e o admin precisa ver isso.
@@ -569,7 +638,8 @@ app.post("/webhook-mercadopago", async (req, res) => {
             tituloJogo,
             valor: valorPago,
             idPagamento: paymentId,
-            metodo: metodoPagamento
+            metodo: metodoPagamento,
+            steamKey: steamKeyGerada
           });
 
           if (emailUsuario) {
@@ -592,6 +662,7 @@ app.post("/webhook-mercadopago", async (req, res) => {
                   titulo_jogo: tituloJogo || "Jogo Digital",
                   valor: valorPago,
                   status: "approved",
+                  steam_key: steamKeyGerada || null,
                   data: new Date().toISOString()
                 });
 
@@ -748,6 +819,21 @@ app.put("/admin/produtos/:id", verificarTokenAdmin, (req, res) => {
   }
 });
 
+// Converte um preço no formato "R$ 9,99" para número (9.99)
+function parsePrecoBRL(precoStr) {
+  if (typeof precoStr === "number") return precoStr;
+  if (!precoStr) return 0;
+  const limpo = String(precoStr).replace(/[^\d,.-]/g, "").replace(",", ".");
+  const numero = parseFloat(limpo);
+  return isNaN(numero) ? 0 : numero;
+}
+
+// Converte um número (9.99) para o formato "R$ 9,99"
+function formatarPrecoBRL(numero) {
+  const arredondado = Math.max(0, Number(numero)).toFixed(2);
+  return `R$ ${arredondado.replace(".", ",")}`;
+}
+
 // Remove um produto
 app.delete("/admin/produtos/:id", verificarTokenAdmin, (req, res) => {
   try {
@@ -769,6 +855,58 @@ app.delete("/admin/produtos/:id", verificarTokenAdmin, (req, res) => {
   }
 });
 
+// Ajusta o preço de vários produtos de uma vez (todos, ou filtrados por categoria)
+// Aceita dois modos:
+//   modo "fixo"       -> define o mesmo preço para todos os produtos afetados
+//   modo "percentual" -> aplica um ajuste (+ ou -) sobre o preço atual de cada produto
+app.post("/admin/produtos/ajuste-em-massa", verificarTokenAdmin, (req, res) => {
+  try {
+    const { modo, valor, categoria } = req.body;
+
+    if (!modo || (modo !== "fixo" && modo !== "percentual")) {
+      return res.status(400).json({ erro: "Informe o modo do ajuste: 'fixo' ou 'percentual'." });
+    }
+    if (valor === undefined || valor === null || isNaN(Number(valor))) {
+      return res.status(400).json({ erro: "Informe um valor numérico válido." });
+    }
+    if (modo === "fixo" && Number(valor) < 0) {
+      return res.status(400).json({ erro: "O preço fixo não pode ser negativo." });
+    }
+
+    const products = loadProducts();
+    let afetados = 0;
+
+    const atualizados = products.map(produto => {
+      // Se uma categoria foi informada, só altera produtos daquela categoria.
+      // Se não foi informada (ou veio "todas"), aplica em todos os produtos.
+      const dentroDoFiltro = !categoria || categoria === "todas" || produto.category === categoria;
+      if (!dentroDoFiltro) return produto;
+
+      afetados++;
+      let novoPrecoNumero;
+
+      if (modo === "fixo") {
+        novoPrecoNumero = Number(valor);
+      } else {
+        const precoAtual = parsePrecoBRL(produto.price);
+        novoPrecoNumero = precoAtual * (1 + Number(valor) / 100);
+      }
+
+      return { ...produto, price: formatarPrecoBRL(novoPrecoNumero) };
+    });
+
+    saveProducts(atualizados);
+
+    return res.json({
+      mensagem: `Preço atualizado em ${afetados} produto${afetados !== 1 ? "s" : ""}.`,
+      produtosAfetados: afetados
+    });
+  } catch (error) {
+    console.error("Erro ao ajustar preços em massa:", error);
+    return res.status(500).json({ erro: "Erro ao ajustar preços em massa." });
+  }
+});
+
 // ═══════════════════════════════════════════════
 // PAINEL ADM — CUPONS DE DESCONTO
 // ═══════════════════════════════════════════════
@@ -784,10 +922,10 @@ app.get("/admin/cupons", verificarTokenAdmin, (req, res) => {
   }
 });
 
-// Cria um novo cupom de desconto (percentual, válido para produtos específicos)
+// Cria um novo cupom de desconto (percentual, válido para produtos específicos ou para todos)
 app.post("/admin/cupons", verificarTokenAdmin, (req, res) => {
   try {
-    const { codigo, percentual, produtosAplicaveis, validoAte, usosMaximos, active } = req.body;
+    const { codigo, percentual, produtosAplicaveis, validoParaTodos, validoAte, usosMaximos, active } = req.body;
 
     if (!codigo || !percentual) {
       return res.status(400).json({ erro: "Código e percentual de desconto são obrigatórios." });
@@ -795,8 +933,9 @@ app.post("/admin/cupons", verificarTokenAdmin, (req, res) => {
     if (Number(percentual) <= 0 || Number(percentual) > 100) {
       return res.status(400).json({ erro: "O percentual de desconto deve ser entre 1 e 100." });
     }
-    if (!Array.isArray(produtosAplicaveis) || produtosAplicaveis.length === 0) {
-      return res.status(400).json({ erro: "Selecione ao menos um produto para o cupom." });
+    // Só exigimos a lista de produtos se o cupom NÃO for válido para todos
+    if (!validoParaTodos && (!Array.isArray(produtosAplicaveis) || produtosAplicaveis.length === 0)) {
+      return res.status(400).json({ erro: "Selecione ao menos um produto para o cupom, ou marque 'válido para todos'." });
     }
 
     const codigoNormalizado = String(codigo).trim().toUpperCase();
@@ -811,8 +950,10 @@ app.post("/admin/cupons", verificarTokenAdmin, (req, res) => {
       id: uuidv4(),
       codigo: codigoNormalizado,
       percentual: Number(percentual),
+      // Se validoParaTodos for true, ignoramos a lista específica de produtos
+      validoParaTodos: !!validoParaTodos,
       // IDs dos produtos (do products.json) em que o cupom pode ser aplicado
-      produtosAplicaveis: produtosAplicaveis.map(id => Number(id)),
+      produtosAplicaveis: validoParaTodos ? [] : produtosAplicaveis.map(id => Number(id)),
       validoAte: validoAte || null, // data ISO; null = sem expiração
       usosMaximos: usosMaximos ? Number(usosMaximos) : null, // null = ilimitado
       usosAtuais: 0,
@@ -847,6 +988,10 @@ app.put("/admin/cupons/:id", verificarTokenAdmin, (req, res) => {
     }
     if (dadosAtualizados.produtosAplicaveis) {
       dadosAtualizados.produtosAplicaveis = dadosAtualizados.produtosAplicaveis.map(pid => Number(pid));
+    }
+    // Se o cupom passou a ser válido para todos, esvaziamos a lista específica
+    if (dadosAtualizados.validoParaTodos) {
+      dadosAtualizados.produtosAplicaveis = [];
     }
 
     // Preserva o ID e o contador de usos já realizados
@@ -889,13 +1034,13 @@ app.delete("/admin/cupons/:id", verificarTokenAdmin, (req, res) => {
 // ═══════════════════════════════════════════════
 // ROTA PÚBLICA — VALIDAR CUPOM NO CHECKOUT
 // ═══════════════════════════════════════════════
-// Recebe o código digitado pelo cliente e o ID do produto no carrinho.
+// Recebe o código digitado pelo cliente e o appId do jogo no carrinho.
 // Retorna o percentual de desconto se o cupom for válido para aquele produto.
 app.post("/validar-cupom", (req, res) => {
   try {
-    const { codigo, produtoId } = req.body;
+    const { codigo, appId } = req.body;
 
-    if (!codigo || !produtoId) {
+    if (!codigo || !appId) {
       return res.status(400).json({ erro: "Informe o código do cupom e o produto." });
     }
 
@@ -915,8 +1060,12 @@ app.post("/validar-cupom", (req, res) => {
     if (cupom.usosMaximos !== null && cupom.usosAtuais >= cupom.usosMaximos) {
       return res.status(400).json({ erro: "Este cupom já atingiu o limite de usos." });
     }
-    if (!cupom.produtosAplicaveis.includes(Number(produtoId))) {
-      return res.status(400).json({ erro: "Este cupom não é válido para o produto selecionado." });
+    if (!cupom.validoParaTodos) {
+      const products = loadProducts();
+      const produto = products.find(p => Number(p.appId) === Number(appId));
+      if (!produto || !cupom.produtosAplicaveis.includes(Number(produto.id))) {
+        return res.status(400).json({ erro: "Este cupom não é válido para o produto selecionado." });
+      }
     }
 
     return res.json({
