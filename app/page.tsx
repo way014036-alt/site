@@ -87,9 +87,9 @@ interface AccountProduct {
 
 // ── Data: Featured Games ───────────────────────────────────
 const FEATURED: FeaturedGame[] = [
-  { id:1, appId:3764200, title:'Resident Evil Requiem', youtubeId:'RJ7eRQgJBbo', price:'R$ 34,00', badge:'Terror Absoluto', description:'O próximo e aterrorizante capítulo da icônica franquia de survival horror.', cover:'https://i.ytimg.com/vi/RJ7eRQgJBbo/maxresdefault.jpg' },
+  { id:1, appId:3764200, title:'Resident Evil Requiem', youtubeId:'8X2kIfS6fb8', price:'R$ 34,00', badge:'Terror Absoluto', description:'O próximo e aterrorizante capítulo da icônica franquia de survival horror.', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
   { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', price:'R$ 27,99', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
-  { id:3, appId:1174180, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', price:'R$ 25,00', badge:'Premiado', description:'cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
+  { id:3, appId:1174180, title:'Red Dead Redemption 2', youtubeId:'RJ7eRQgJBbo', price:'R$ 25,00', badge:'Premiado', description:'Uma épica história de honra, crime e lealdade no alvorecer da era moderna do Velho Oeste.', cover:'https://i.ytimg.com/vi/RJ7eRQgJBbo/maxresdefault.jpg' },
   { id:4, appId:1203220, title:'Pragmata', youtubeId:'oncaa_fMsyw', price:'R$ 7,99', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
   { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', price:'R$ 4,99', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
   { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', price:'R$ 34,00', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
@@ -2325,14 +2325,38 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
   const [pixQrCodeBase64, setPixQrCodeBase64] = useState('');
   const [loadingPix, setLoadingPix] = useState(false);
 
-  // GERADOR DE KEY ALEATÓRIA (tela de Recebimento)
+  // BUSCA A KEY REAL GERADA PELO BACKEND (via ShadowKeys) após o pagamento ser aprovado.
+  // A key pode levar alguns segundos para ficar pronta, então fazemos um pequeno polling.
   const [gameKey, setGameKey] = useState('');
   const [keyCopied, setKeyCopied] = useState(false);
-  const gerarKeyAleatoria = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    const bloco = () => Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    return `${bloco()}-${bloco()}-${bloco()}-${bloco()}`;
+  const [buscandoKey, setBuscandoKey] = useState(false);
+
+  const buscarKeyGerada = async (idPagamento: string | number) => {
+    if (!accountEmail) return;
+    setBuscandoKey(true);
+    const tentativas = 10; // ~20 segundos no total
+    for (let i = 0; i < tentativas; i++) {
+      try {
+        const res = await fetch(`${API_BASE}/minhas-compras`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('neplim_token') || ''}` }
+        });
+        if (res.ok) {
+          const compras = await res.json();
+          const compra = compras.find((c: any) => String(c.id_pagamento) === String(idPagamento));
+          if (compra?.steam_key) {
+            setGameKey(compra.steam_key);
+            setBuscandoKey(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao buscar key gerada:', err);
+      }
+      await new Promise(r => setTimeout(r, 2000));
+    }
+    setBuscandoKey(false); // a key não ficou pronta a tempo; o admin pode gerar manualmente depois
   };
+
   const handleCopyKey = () => {
     if (!gameKey) return;
     navigator.clipboard.writeText(gameKey);
@@ -2462,9 +2486,9 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
 
       if (data.status === 'approved') {
         setPaymentStatus('approved');
-        setGameKey(gerarKeyAleatoria());
         setDone(true);
         onCheckoutSuccess?.();
+        buscarKeyGerada(data.id);
       } else if (data.status === 'in_process' || data.status === 'pending') {
         setPaymentStatus('pending');
         setPaymentId(data.id); // o polling existente (useEffect abaixo) assume daqui
@@ -2520,7 +2544,9 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
         body: JSON.stringify({
           valor: total,
           emailUsuario: accountEmail || email,
-          tituloJogo: isCartCheckout ? effectiveItem.title : `${qty}x ${item.title}`
+          tituloJogo: isCartCheckout ? effectiveItem.title : `${qty}x ${item.title}`,
+          appId: isCartCheckout ? undefined : item.appId,
+          cupom: coupon.trim() || undefined
         })
       });
 
@@ -2589,10 +2615,10 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
 
         if (data && data.status === 'approved') {
           setPaymentStatus('approved');
-          setGameKey(gerarKeyAleatoria());
           // O restante do seu código original continua aqui para baixo...
           setDone(true); // avança para a próxima tela automaticamente
           onCheckoutSuccess?.();
+          buscarKeyGerada(paymentId);
         } else if (data.status === 'rejected' || data.status === 'cancelled') {
           setPaymentStatus('rejected');
         }
@@ -2664,12 +2690,25 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
             <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, color:C.textMuted, fontSize:12, marginBottom:10 }}>
               <Key size={14} /> Sua Chave de Ativação (Steam Key)
             </div>
-            <div style={{ display:'flex', gap:8, background:'#0a0a0a', border:`1px solid ${C.border}`, borderRadius:8, padding:'12px 14px', alignItems:'center' }}>
-              <div style={{ flex:1, fontSize:16, fontWeight:700, letterSpacing:'1px', color:C.accent, fontFamily:'monospace', wordBreak:'break-all', textAlign:'left' }}>{gameKey}</div>
-            </div>
-            <button onClick={handleCopyKey} style={{ width:'100%', marginTop:10, background: keyCopied ? C.green : C.primary, border:'none', color:'white', borderRadius:8, padding:'11px', fontSize:14, fontWeight:700, cursor:'pointer' }}>
-              {keyCopied ? 'Copiada!' : 'Copiar chave'}
-            </button>
+            {gameKey ? (
+              <>
+                <div style={{ display:'flex', gap:8, background:'#0a0a0a', border:`1px solid ${C.border}`, borderRadius:8, padding:'12px 14px', alignItems:'center' }}>
+                  <div style={{ flex:1, fontSize:16, fontWeight:700, letterSpacing:'1px', color:C.accent, fontFamily:'monospace', wordBreak:'break-all', textAlign:'left' }}>{gameKey}</div>
+                </div>
+                <button onClick={handleCopyKey} style={{ width:'100%', marginTop:10, background: keyCopied ? C.green : C.primary, border:'none', color:'white', borderRadius:8, padding:'11px', fontSize:14, fontWeight:700, cursor:'pointer' }}>
+                  {keyCopied ? 'Copiada!' : 'Copiar chave'}
+                </button>
+              </>
+            ) : buscandoKey ? (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, background:'#0a0a0a', border:`1px solid ${C.border}`, borderRadius:8, padding:'16px 14px', color:C.textMuted, fontSize:13 }}>
+                <span className="adm-spinner" style={{ width:16, height:16, border:`2px solid ${C.border}`, borderTopColor:C.secondary, borderRadius:'50%', display:'inline-block', animation:'spin 0.8s linear infinite' }} />
+                Gerando sua chave, só um instante...
+              </div>
+            ) : (
+              <div style={{ background:'#0a0a0a', border:`1px solid ${C.border}`, borderRadius:8, padding:'14px', color:C.textMuted, fontSize:12.5, lineHeight:1.5 }}>
+                Sua chave está sendo processada e aparecerá em breve em <strong style={{ color:'#999' }}>Minhas Compras</strong>. Se não aparecer em alguns minutos, fale com o suporte.
+              </div>
+            )}
           </div>
 
           <p style={{ color:'#666', fontSize:12, lineHeight:1.6, marginBottom:24 }}>
@@ -3060,6 +3099,7 @@ interface Compra {
   titulo_jogo: string;
   valor: number;
   status: string;
+  steam_key?: string | null;
   data: string;
 }
 
@@ -3111,17 +3151,31 @@ function MyPurchasesModal({ token, onClose }: { token: string; onClose: () => vo
         {!loading && !error && compras.length > 0 && (
           <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
             {compras.slice().reverse().map(c => (
-              <div key={c.id} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, padding:'16px 18px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
-                <div>
-                  <p style={{ color:C.textLight, fontWeight:700, fontSize:15, marginBottom:4 }}>{c.titulo_jogo}</p>
-                  <p style={{ color:C.textMuted, fontSize:12 }}>{new Date(c.data).toLocaleString('pt-BR')}</p>
+              <div key={c.id} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, padding:'16px 18px' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom: c.steam_key ? 12 : 0 }}>
+                  <div>
+                    <p style={{ color:C.textLight, fontWeight:700, fontSize:15, marginBottom:4 }}>{c.titulo_jogo}</p>
+                    <p style={{ color:C.textMuted, fontSize:12 }}>{new Date(c.data).toLocaleString('pt-BR')}</p>
+                  </div>
+                  <div style={{ textAlign:'right' }}>
+                    <p style={{ color:C.secondary, fontWeight:800, fontSize:15 }}>
+                      {Number(c.valor).toLocaleString('pt-BR', { style:'currency', currency:'BRL' })}
+                    </p>
+                    <span style={{ fontSize:11, fontWeight:700, color:C.green, textTransform:'uppercase' }}>Aprovado</span>
+                  </div>
                 </div>
-                <div style={{ textAlign:'right' }}>
-                  <p style={{ color:C.secondary, fontWeight:800, fontSize:15 }}>
-                    {Number(c.valor).toLocaleString('pt-BR', { style:'currency', currency:'BRL' })}
-                  </p>
-                  <span style={{ fontSize:11, fontWeight:700, color:C.green, textTransform:'uppercase' }}>Aprovado</span>
-                </div>
+                {c.steam_key ? (
+                  <div style={{ display:'flex', gap:8, background:C.bg, border:`1px solid ${C.border}`, borderRadius:8, padding:'10px 12px', alignItems:'center' }}>
+                    <Key size={13} color={C.textMuted} />
+                    <div style={{ flex:1, fontSize:13, fontWeight:700, letterSpacing:'0.5px', color:C.accent, fontFamily:'monospace', wordBreak:'break-all' }}>{c.steam_key}</div>
+                    <button onClick={() => navigator.clipboard.writeText(c.steam_key!)}
+                      style={{ background:'rgba(123,47,190,0.12)', border:'none', color:C.secondary, fontSize:11, fontWeight:700, padding:'6px 10px', borderRadius:6, cursor:'pointer', whiteSpace:'nowrap' }}>
+                      Copiar
+                    </button>
+                  </div>
+                ) : (
+                  <p style={{ color:C.textMuted, fontSize:12 }}>🔄 Chave sendo processada — atualize esta página em alguns instantes.</p>
+                )}
               </div>
             ))}
           </div>
@@ -3310,6 +3364,135 @@ function AdminProductFormModal({
 }
 
 /* ═══════════════════════════════════════════════════════════
+   ADMIN — MODAL DE AJUSTE DE PREÇO EM MASSA
+═══════════════════════════════════════════════════════════ */
+function AdminBulkPriceModal({
+  categorias, onClose, onApplied, adminToken
+}: {
+  categorias: string[];
+  onClose: () => void;
+  onApplied: (mensagem: string) => void;
+  adminToken: string;
+}) {
+  const [modo, setModo] = useState<'fixo' | 'percentual'>('fixo');
+  const [valor, setValor] = useState('');
+  const [categoria, setCategoria] = useState('todas');
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const inputStyle: React.CSSProperties = { padding:'10px 14px', background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, color:C.text, fontSize:14, outline:'none', width:'100%', boxSizing:'border-box' };
+  const labelStyle: React.CSSProperties = { color:C.textMuted, fontSize:12, marginBottom:6, display:'block' };
+  const focusStyle = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => { e.target.style.borderColor = C.secondary; };
+  const blurStyle = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => { e.target.style.borderColor = C.border; };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr('');
+    if (valor.trim() === '' || isNaN(Number(valor))) { setErr('Informe um valor numérico válido.'); return; }
+    if (modo === 'fixo' && Number(valor) < 0) { setErr('O preço fixo não pode ser negativo.'); return; }
+
+    const escopoTexto = categoria === 'todas' ? 'TODOS os produtos do catálogo' : `todos os produtos da categoria "${categoria}"`;
+    const acaoTexto = modo === 'fixo'
+      ? `definir o preço de ${escopoTexto} para R$ ${Number(valor).toFixed(2).replace('.', ',')}`
+      : `aplicar um ajuste de ${Number(valor) > 0 ? '+' : ''}${valor}% no preço atual de ${escopoTexto}`;
+
+    if (!confirm(`Tem certeza que deseja ${acaoTexto}? Essa ação não pode ser desfeita.`)) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/produtos/ajuste-em-massa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ modo, valor: Number(valor), categoria })
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.erro || 'Erro ao ajustar preços.'); setLoading(false); return; }
+      onApplied(data.mensagem || 'Preços atualizados com sucesso.');
+    } catch {
+      setErr('Não foi possível conectar ao servidor.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div onClick={onClose}
+      style={{ position:'fixed', inset:0, zIndex:1700, background:'rgba(0,0,0,0.75)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{ width:'100%', maxWidth:460, background:'linear-gradient(160deg, #0f0f1a 0%, #0a0a0f 100%)', border:`1px solid ${C.border}`, borderRadius:20, position:'relative', boxShadow:`0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(123,47,190,0.15)`, animation:'adminFadeIn 0.25s ease' }}>
+
+        <div style={{ padding:'22px 24px 18px', borderBottom:`1px solid rgba(123,47,190,0.15)`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:32, height:32, borderRadius:9, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15 }}>💰</div>
+            <div>
+              <h2 style={{ fontSize:16, fontWeight:800, color:C.textLight, margin:0 }}>Ajustar preços em massa</h2>
+              <p style={{ fontSize:11, color:C.textMuted, margin:0 }}>Altere o preço de vários jogos de uma vez</p>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${C.border}`, color:C.textMuted, cursor:'pointer', width:30, height:30, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <X size={15} />
+          </button>
+        </div>
+
+        <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:14, padding:'20px 24px 24px' }}>
+          <div>
+            <label style={labelStyle}>Tipo de ajuste</label>
+            <div style={{ display:'flex', gap:8 }}>
+              <button type="button" onClick={() => setModo('fixo')}
+                style={{ flex:1, padding:'10px', borderRadius:9, border:`1px solid ${modo === 'fixo' ? C.secondary : C.border}`, background: modo === 'fixo' ? 'rgba(123,47,190,0.15)' : 'transparent', color: modo === 'fixo' ? C.textLight : C.textMuted, fontWeight:600, fontSize:13, cursor:'pointer' }}>
+                Preço fixo
+              </button>
+              <button type="button" onClick={() => setModo('percentual')}
+                style={{ flex:1, padding:'10px', borderRadius:9, border:`1px solid ${modo === 'percentual' ? C.secondary : C.border}`, background: modo === 'percentual' ? 'rgba(123,47,190,0.15)' : 'transparent', color: modo === 'percentual' ? C.textLight : C.textMuted, fontWeight:600, fontSize:13, cursor:'pointer' }}>
+                Ajuste percentual
+              </button>
+            </div>
+          </div>
+
+          {modo === 'fixo' ? (
+            <div>
+              <label style={labelStyle}>Novo preço para todos os jogos selecionados</label>
+              <input style={inputStyle} type="number" min="0" step="0.01" value={valor} onChange={e=>setValor(e.target.value)} placeholder="Ex: 9.99" onFocus={focusStyle} onBlur={blurStyle} />
+              <p style={{ fontSize:11, color:C.textMuted, marginTop:5 }}>Todos os jogos afetados passarão a custar exatamente esse valor.</p>
+            </div>
+          ) : (
+            <div>
+              <label style={labelStyle}>Percentual de ajuste (use negativo para reduzir)</label>
+              <input style={inputStyle} type="number" step="0.1" value={valor} onChange={e=>setValor(e.target.value)} placeholder="Ex: 10 (aumenta 10%) ou -15 (reduz 15%)" onFocus={focusStyle} onBlur={blurStyle} />
+              <p style={{ fontSize:11, color:C.textMuted, marginTop:5 }}>Aplicado sobre o preço ATUAL de cada jogo individualmente.</p>
+            </div>
+          )}
+
+          <div>
+            <label style={labelStyle}>Aplicar em</label>
+            <select style={inputStyle} value={categoria} onChange={e=>setCategoria(e.target.value)} onFocus={focusStyle} onBlur={blurStyle}>
+              <option value="todas">Todos os produtos do catálogo</option>
+              {categorias.map(cat => <option key={cat} value={cat}>Só categoria: {cat}</option>)}
+            </select>
+          </div>
+
+          {err && (
+            <div style={{ background:'rgba(255,107,107,0.08)', border:'1px solid rgba(255,107,107,0.25)', borderRadius:9, padding:'10px 14px', color:'#FF6B6B', fontSize:13 }}>
+              ⚠️ {err}
+            </div>
+          )}
+
+          <div style={{ display:'flex', gap:10, marginTop:4 }}>
+            <button type="button" onClick={onClose}
+              style={{ flex:1, padding:'12px', borderRadius:10, background:'transparent', border:`1px solid ${C.border}`, color:C.textMuted, fontWeight:600, fontSize:14, cursor:'pointer' }}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={loading}
+              style={{ flex:2, padding:'12px', borderRadius:10, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow:`0 4px 16px rgba(123,47,190,0.4)` }}>
+              {loading ? '⏳ Aplicando...' : '✓ Aplicar ajuste'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    ADMIN — MODAL DE CRIAR/EDITAR CUPOM DE DESCONTO
 ═══════════════════════════════════════════════════════════ */
 function AdminCouponFormModal({
@@ -3327,6 +3510,7 @@ function AdminCouponFormModal({
   const [validoAte, setValidoAte] = useState(coupon?.validoAte ? coupon.validoAte.slice(0, 10) : '');
   const [usosMaximos, setUsosMaximos] = useState(coupon?.usosMaximos ? String(coupon.usosMaximos) : '');
   const [active, setActive] = useState(coupon?.active !== false);
+  const [validoParaTodos, setValidoParaTodos] = useState(coupon?.validoParaTodos || false);
   const [produtosSelecionados, setProdutosSelecionados] = useState<number[]>(coupon?.produtosAplicaveis || []);
   const [productSearch, setProductSearch] = useState('');
   const [err, setErr] = useState('');
@@ -3343,11 +3527,12 @@ function AdminCouponFormModal({
     setErr('');
     if (!codigo.trim() || !percentual.trim()) { setErr('Código e percentual de desconto são obrigatórios.'); return; }
     if (Number(percentual) <= 0 || Number(percentual) > 100) { setErr('O percentual deve ser entre 1 e 100.'); return; }
-    if (produtosSelecionados.length === 0) { setErr('Selecione ao menos um produto para o cupom.'); return; }
+    if (!validoParaTodos && produtosSelecionados.length === 0) { setErr('Selecione ao menos um produto, ou marque "válido para todos".'); return; }
 
     const payload: any = {
       codigo: codigo.trim(),
       percentual: Number(percentual),
+      validoParaTodos,
       produtosAplicaveis: produtosSelecionados,
       validoAte: validoAte || null,
       usosMaximos: usosMaximos ? Number(usosMaximos) : null,
@@ -3431,23 +3616,32 @@ function AdminCouponFormModal({
             <p style={{ fontSize:11, color:C.textMuted, marginTop:5 }}>Deixe em branco para um cupom sem data de expiração.</p>
           </div>
 
-          <div>
-            <label style={labelStyle}>Produtos aplicáveis * ({produtosSelecionados.length} selecionado{produtosSelecionados.length !== 1 ? 's' : ''})</label>
-            <input value={productSearch} onChange={e=>setProductSearch(e.target.value)} placeholder="🔍  Buscar produto..."
-              style={{ ...inputStyle, marginBottom:8 }} onFocus={focusStyle} onBlur={blurStyle} />
-            <div style={{ maxHeight:180, overflowY:'auto', border:`1px solid ${C.border}`, borderRadius:8, background:C.surface }}>
-              {filteredProducts.length === 0 && (
-                <p style={{ color:C.textMuted, fontSize:12, padding:'14px', textAlign:'center' }}>Nenhum produto encontrado.</p>
-              )}
-              {filteredProducts.slice(0, 100).map(p => (
-                <label key={p.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', borderBottom:`1px solid rgba(123,47,190,0.08)`, cursor:'pointer' }}>
-                  <input type="checkbox" checked={produtosSelecionados.includes(p.id)} onChange={() => toggleProduto(p.id)} style={{ accentColor:C.primary, width:14, height:14, cursor:'pointer' }} />
-                  <span style={{ color:C.textLight, fontSize:13, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.title}</span>
-                  <span style={{ color:C.secondary, fontSize:12, fontWeight:600 }}>{p.price}</span>
-                </label>
-              ))}
-            </div>
+          <div style={{ display:'flex', alignItems:'center', gap:10, background:'rgba(76,175,80,0.06)', border:`1px solid rgba(76,175,80,0.2)`, borderRadius:10, padding:'12px 14px' }}>
+            <input type="checkbox" id="cupom-todos" checked={validoParaTodos} onChange={e=>setValidoParaTodos(e.target.checked)} style={{ accentColor:C.green, width:15, height:15, cursor:'pointer' }} />
+            <label htmlFor="cupom-todos" style={{ color:C.textMuted, fontSize:13, userSelect:'none', cursor:'pointer' }}>
+              <strong style={{ color:C.green }}>Válido para todos os produtos</strong> — o cupom funciona em qualquer jogo do catálogo
+            </label>
           </div>
+
+          {!validoParaTodos && (
+            <div>
+              <label style={labelStyle}>Produtos aplicáveis * ({produtosSelecionados.length} selecionado{produtosSelecionados.length !== 1 ? 's' : ''})</label>
+              <input value={productSearch} onChange={e=>setProductSearch(e.target.value)} placeholder="🔍  Buscar produto..."
+                style={{ ...inputStyle, marginBottom:8 }} onFocus={focusStyle} onBlur={blurStyle} />
+              <div style={{ maxHeight:180, overflowY:'auto', border:`1px solid ${C.border}`, borderRadius:8, background:C.surface }}>
+                {filteredProducts.length === 0 && (
+                  <p style={{ color:C.textMuted, fontSize:12, padding:'14px', textAlign:'center' }}>Nenhum produto encontrado.</p>
+                )}
+                {filteredProducts.slice(0, 100).map(p => (
+                  <label key={p.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', borderBottom:`1px solid rgba(123,47,190,0.08)`, cursor:'pointer' }}>
+                    <input type="checkbox" checked={produtosSelecionados.includes(p.id)} onChange={() => toggleProduto(p.id)} style={{ accentColor:C.primary, width:14, height:14, cursor:'pointer' }} />
+                    <span style={{ color:C.textLight, fontSize:13, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.title}</span>
+                    <span style={{ color:C.secondary, fontSize:12, fontWeight:600 }}>{p.price}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ display:'flex', alignItems:'center', gap:10, background:'rgba(123,47,190,0.06)', border:`1px solid rgba(123,47,190,0.15)`, borderRadius:10, padding:'12px 14px' }}>
             <input type="checkbox" id="cupom-active" checked={active} onChange={e=>setActive(e.target.checked)} style={{ accentColor:C.primary, width:15, height:15, cursor:'pointer' }} />
@@ -3511,6 +3705,7 @@ interface AdminCoupon {
   id: string;
   codigo: string;
   percentual: number;
+  validoParaTodos: boolean;
   produtosAplicaveis: number[];
   validoAte: string | null;
   usosMaximos: number | null;
@@ -3533,6 +3728,7 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
 
   const [editingCoupon, setEditingCoupon] = useState<AdminCoupon | null>(null);
   const [creatingCoupon, setCreatingCoupon] = useState(false);
@@ -3660,6 +3856,7 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
   const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
 
   const filteredProducts = products.filter(p => !productSearch || p.title.toLowerCase().includes(productSearch.toLowerCase()));
+  const categoriasDisponiveis = Array.from(new Set(products.map(p => p.category))).sort();
 
   const maxDiaValor = stats ? Math.max(1, ...stats.vendasPorDia.map(d => d.valor)) : 1;
 
@@ -3834,6 +4031,12 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
                 onFocus={e=>(e.target.style.borderColor=C.secondary)}
                 onBlur={e=>(e.target.style.borderColor=C.border)}
               />
+              <button onClick={() => setBulkPriceOpen(true)}
+                style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 20px', borderRadius:10, background:'rgba(123,47,190,0.1)', border:`1px solid ${C.secondary}`, color:C.secondary, fontWeight:700, fontSize:14, cursor:'pointer', transition:'background 0.15s' }}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(123,47,190,0.2)'}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(123,47,190,0.1)'}}>
+                💰 Ajustar preços em massa
+              </button>
               <button onClick={() => setCreatingProduct(true)}
                 style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 20px', borderRadius:10, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:`0 4px 14px rgba(123,47,190,0.4)`, transition:'opacity 0.15s, transform 0.15s' }}
                 onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)'}}
@@ -3852,7 +4055,7 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.slice(0, 200).map((p, i) => (
+                  {filteredProducts.map((p, i) => (
                     <tr key={p.id} className="adm-row" style={{ borderBottom:`1px solid rgba(123,47,190,0.1)`, animation:`adminSlideIn 0.25s ease ${Math.min(i,10) * 0.03}s both` }}>
                       <td style={{ padding:'12px 16px', color:C.textLight, fontWeight:600, maxWidth:260, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.title}</td>
                       <td style={{ padding:'12px 16px', color:C.textMuted, fontSize:12 }}>{p.category}</td>
@@ -3875,11 +4078,9 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
                   ))}
                 </tbody>
               </table>
-              {filteredProducts.length > 200 && (
-                <p style={{ color:C.textMuted, fontSize:12, padding:'12px 16px', textAlign:'center' }}>
-                  Mostrando 200 de {filteredProducts.length} produtos. Refine a busca para ver outros.
-                </p>
-              )}
+              <p style={{ color:C.textMuted, fontSize:12, padding:'12px 16px', textAlign:'center' }}>
+                Mostrando {filteredProducts.length} de {products.length} produtos.
+              </p>
             </div>
           </div>
         )}
@@ -3972,6 +4173,14 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
           adminToken={adminToken}
           onClose={() => setEditingProduct(null)}
           onSaved={() => { setEditingProduct(null); loadProdutos(); }}
+        />
+      )}
+      {bulkPriceOpen && (
+        <AdminBulkPriceModal
+          categorias={categoriasDisponiveis}
+          adminToken={adminToken}
+          onClose={() => setBulkPriceOpen(false)}
+          onApplied={(mensagem) => { setBulkPriceOpen(false); alert(mensagem); loadProdutos(); }}
         />
       )}
       {creatingCoupon && (
