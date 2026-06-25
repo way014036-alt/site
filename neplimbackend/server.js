@@ -6,9 +6,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
-const crypto = require("crypto");
 
-// MERCADO PAGO — usado somente para pagamentos; entrega do jogo é manual
+// IMPORTAÇÃO DA VERSÃO 2.x.x DO MERCADO PAGO
 const { MercadoPagoConfig, Payment } = require("mercadopago");
 
 const app = express();
@@ -22,285 +21,6 @@ const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN
 });
 const payment = new Payment(client);
-
-// ═══════════════════════════════════════════════
-// ENTREGA MANUAL PELO DISCORD
-// ═══════════════════════════════════════════════
-// O backend NÃO gera e NÃO solicita Steam Keys de fornecedor.
-// Depois de um pagamento aprovado, ele cria somente um código NEPLIM-...
-// que o cliente apresenta em um ticket. A entrega do jogo fica manual.
-const BOT_SYNC_SECRET = process.env.BOT_SYNC_SECRET || "troque_esse_segredo_em_producao";
-
-
-// ═══════════════════════════════════════════════
-// CÓDIGOS DE COMPROVANTE PARA SUPORTE NO DISCORD
-// ═══════════════════════════════════════════════
-// Estes códigos NÃO são Steam Keys. Cada pagamento aprovado recebe um código
-// NEPLIM-... único. O cliente envia esse código no ticket e o bot usa
-// /bot/validar-codigo para vinculá-lo a um usuário do Discord uma única vez.
-const SUPPORT_CODES_FILE = path.join(__dirname, "support_codes.json");
-const SUPPORT_CODE_PREFIX = "NEPLIM-";
-const SUPPORT_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-const SUPPORT_CODE_RANDOM_LENGTH = 24;
-const SUPPORT_CODE_REGEX = /^NEPLIM-[A-Z0-9]{8,128}$/;
-
-function atomicWriteJson(filePath, value) {
-  const tempPath = `${filePath}.${process.pid}.tmp`;
-  fs.writeFileSync(tempPath, JSON.stringify(value, null, 2), "utf8");
-  fs.renameSync(tempPath, filePath);
-}
-
-function loadSupportCodes() {
-  if (!fs.existsSync(SUPPORT_CODES_FILE)) {
-    atomicWriteJson(SUPPORT_CODES_FILE, []);
-  }
-
-  try {
-    const parsed = JSON.parse(fs.readFileSync(SUPPORT_CODES_FILE, "utf8"));
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error("Erro ao carregar support_codes.json:", error);
-    return [];
-  }
-}
-
-function saveSupportCodes(codes) {
-  atomicWriteJson(SUPPORT_CODES_FILE, codes);
-}
-
-function normalizeSupportCode(code) {
-  return String(code || "").trim().toUpperCase();
-}
-
-function generateRandomSupportCode(existingCodes) {
-  const used = new Set(existingCodes.map(item => normalizeSupportCode(item.code)));
-
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    let suffix = "";
-    for (let index = 0; index < SUPPORT_CODE_RANDOM_LENGTH; index += 1) {
-      suffix += SUPPORT_CODE_ALPHABET[crypto.randomInt(0, SUPPORT_CODE_ALPHABET.length)];
-    }
-
-    const candidate = `${SUPPORT_CODE_PREFIX}${suffix}`;
-    if (!used.has(candidate)) return candidate;
-  }
-
-  throw new Error("Não foi possível gerar um código de suporte único.");
-}
-
-function findSupportCodeByPaymentId(paymentId, codes = null) {
-  const list = codes || loadSupportCodes();
-  return list.find(item => String(item.paymentId) === String(paymentId)) || null;
-}
-
-function ensureSupportCodeForPurchase({ paymentId, emailUsuario, nomeUsuario, tituloJogo, valor, metodo }) {
-  const codes = loadSupportCodes();
-  const existingIndex = codes.findIndex(item => String(item.paymentId) === String(paymentId));
-
-  if (existingIndex !== -1) {
-    const existing = codes[existingIndex];
-    let changed = false;
-    const updates = {
-      emailUsuario: emailUsuario || existing.emailUsuario || null,
-      nomeUsuario: nomeUsuario || existing.nomeUsuario || null,
-      productName: tituloJogo || existing.productName || "Jogo Digital",
-      value: Number(valor ?? existing.value ?? 0),
-      paymentMethod: metodo || existing.paymentMethod || "desconhecido",
-      paymentStatus: "approved"
-    };
-
-    for (const [key, value] of Object.entries(updates)) {
-      if (existing[key] !== value) {
-        existing[key] = value;
-        changed = true;
-      }
-    }
-
-    if (changed) {
-      existing.updatedAt = new Date().toISOString();
-      saveSupportCodes(codes);
-    }
-    return existing;
-  }
-
-  const record = {
-    code: generateRandomSupportCode(codes),
-    paymentId: String(paymentId),
-    emailUsuario: emailUsuario || null,
-    nomeUsuario: nomeUsuario || null,
-    productName: tituloJogo || "Jogo Digital",
-    value: Number(valor) || 0,
-    paymentMethod: metodo || "desconhecido",
-    paymentStatus: "approved",
-    status: "available",
-    createdAt: new Date().toISOString(),
-    usedAt: null,
-    buyerDiscordId: null,
-    buyerDiscordUsername: null,
-    validatedByDiscordId: null,
-    validatedByDiscordUsername: null,
-    guildId: null,
-    channelId: null
-  };
-
-  codes.push(record);
-  saveSupportCodes(codes);
-  return record;
-}
-
-function syncSupportCodeIntoPurchaseFiles(record) {
-  const sales = loadSales();
-  const saleIndex = sales.findIndex(item => String(item.id_pagamento) === String(record.paymentId));
-  if (saleIndex !== -1) {
-    sales[saleIndex].support_code = record.code;
-    // Compatibilidade com o frontend antigo, que exibe apenas o campo steam_key.
-    // O valor abaixo é um comprovante de compra, NÃO uma Steam Key.
-    sales[saleIndex].steam_key = record.code;
-    sales[saleIndex].delivery_type = "manual_ticket";
-    sales[saleIndex].support_code_status = record.status;
-    sales[saleIndex].support_code_used_by_discord_id = record.buyerDiscordId || null;
-    sales[saleIndex].support_code_used_at = record.usedAt || null;
-    saveSales(sales);
-  }
-
-  if (record.emailUsuario) {
-    const users = loadUsers();
-    const userIndex = users.findIndex(
-      user => String(user.email || "").toLowerCase() === String(record.emailUsuario).toLowerCase()
-    );
-
-    if (userIndex !== -1 && Array.isArray(users[userIndex].compras)) {
-      const purchase = users[userIndex].compras.find(
-        item => String(item.id_pagamento) === String(record.paymentId)
-      );
-
-      if (purchase) {
-        purchase.support_code = record.code;
-        // Compatibilidade com a tela atual de Minhas Compras.
-        purchase.steam_key = record.code;
-        purchase.delivery_type = "manual_ticket";
-        purchase.support_code_status = record.status;
-        purchase.support_code_used_by_discord_id = record.buyerDiscordId || null;
-        purchase.support_code_used_at = record.usedAt || null;
-        saveUsers(users);
-      }
-    }
-  }
-}
-
-// Middleware: protege as rotas que só o bot de Discord deve acessar
-function verificarSegredoBot(req, res, next) {
-  const segredo = req.headers["x-bot-secret"];
-  if (!segredo || segredo !== BOT_SYNC_SECRET) {
-    return res.status(401).json({ erro: "Não autorizado." });
-  }
-  next();
-}
-
-// Compatibilidade com versões antigas do bot: nunca há Steam Keys pendentes.
-// Isso impede que um sync_loja.py antigo continue tentando chamar fornecedores.
-app.get("/bot/pedidos-pendentes", verificarSegredoBot, (_req, res) => {
-  return res.json([]);
-});
-
-app.post("/bot/entregar-key", verificarSegredoBot, (_req, res) => {
-  return res.status(410).json({
-    erro: "Entrega automática desativada. A entrega agora é manual pelo ticket do Discord."
-  });
-});
-
-// Valida e consome um código de comprovante enviado pelo cliente no ticket.
-// A leitura e a gravação são síncronas dentro desta requisição, evitando que
-// duas validações concorrentes usem o mesmo código nesta instância do servidor.
-app.post("/bot/validar-codigo", verificarSegredoBot, (req, res) => {
-  try {
-    const codigo = normalizeSupportCode(req.body?.codigo);
-    const discordUserId = String(req.body?.discordUserId || "").trim();
-    const discordUsername = String(req.body?.discordUsername || "Usuário não informado").trim();
-    const validadoPorId = String(req.body?.validadoPorId || "").trim();
-    const validadoPorUsername = String(req.body?.validadoPorUsername || "Validador não informado").trim();
-    const guildId = String(req.body?.guildId || "").trim();
-    const channelId = String(req.body?.channelId || "").trim();
-
-    if (!SUPPORT_CODE_REGEX.test(codigo)) {
-      return res.status(400).json({
-        status: "invalid",
-        message: "Formato de código inválido."
-      });
-    }
-
-    if (!/^\d{15,25}$/.test(discordUserId)) {
-      return res.status(400).json({
-        status: "invalid",
-        message: "discordUserId inválido."
-      });
-    }
-
-    const codes = loadSupportCodes();
-    const index = codes.findIndex(item => normalizeSupportCode(item.code) === codigo);
-
-    if (index === -1) {
-      return res.status(404).json({
-        status: "invalid",
-        message: "Código não encontrado ou não pertence a uma compra aprovada."
-      });
-    }
-
-    const record = codes[index];
-    const sale = loadSales().find(
-      item => String(item.id_pagamento) === String(record.paymentId)
-    );
-
-    if (record.paymentStatus !== "approved" || (sale && sale.status !== "approved")) {
-      return res.status(422).json({
-        status: "invalid",
-        message: "A compra ligada a este código não está aprovada."
-      });
-    }
-
-    if (record.status === "used" || record.buyerDiscordId) {
-      return res.status(409).json({
-        status: "already_activated",
-        message: "Este código já foi validado anteriormente.",
-        buyerDiscordId: record.buyerDiscordId,
-        buyerName: record.buyerDiscordUsername,
-        orderId: record.paymentId,
-        productName: record.productName,
-        activatedAt: record.usedAt
-      });
-    }
-
-    record.status = "used";
-    record.usedAt = new Date().toISOString();
-    record.buyerDiscordId = discordUserId;
-    record.buyerDiscordUsername = discordUsername;
-    record.validatedByDiscordId = validadoPorId || null;
-    record.validatedByDiscordUsername = validadoPorUsername || null;
-    record.guildId = guildId || null;
-    record.channelId = channelId || null;
-    record.updatedAt = record.usedAt;
-
-    codes[index] = record;
-    saveSupportCodes(codes);
-    syncSupportCodeIntoPurchaseFiles(record);
-
-    return res.status(200).json({
-      status: "validated",
-      message: "Código válido e vinculado ao comprador no Discord.",
-      buyerDiscordId: record.buyerDiscordId,
-      buyerName: record.buyerDiscordUsername,
-      orderId: record.paymentId,
-      productName: record.productName,
-      activatedAt: record.usedAt
-    });
-  } catch (error) {
-    console.error("Erro ao validar código de suporte:", error);
-    return res.status(500).json({
-      status: "error",
-      message: "Erro interno ao validar o código."
-    });
-  }
-});
 
 // ═══════════════════════════════════════════════
 // SISTEMA DE USUÁRIOS (persistência em arquivo JSON)
@@ -394,8 +114,42 @@ function saveCoupons(coupons) {
   fs.writeFileSync(COUPONS_FILE, JSON.stringify(coupons, null, 2));
 }
 
+// ═══════════════════════════════════════════════
+// SHADOWKEYS — GERAÇÃO AUTOMÁTICA DE CHAVES
+// ═══════════════════════════════════════════════
+async function gerarChaveShadowKeys(appId, quantidade = 1) {
+  const res = await fetch("https://revenda.shadowkeys.com.br/api/v1/keys/generate", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.SHADOWKEYS_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ appId: String(appId), quantity: quantidade }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Erro ao gerar chave ShadowKeys");
+  return data.keys; // array de { id, code, gameNames, chargedCents, ... }
+}
+
+// ═══════════════════════════════════════════════
+// SHADOWKEYS — GERAÇÃO AUTOMÁTICA DE CHAVES
+// ═══════════════════════════════════════════════
+async function gerarChaveShadowKeys(appId, quantidade = 1) {
+  const res = await fetch("https://revenda.shadowkeys.com.br/api/v1/keys/generate", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.SHADOWKEYS_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ appId: String(appId), quantity: quantidade }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Erro ao gerar chave ShadowKeys");
+  return data.keys; // array de { id, code, gameNames, chargedCents, ... }
+}
+
 // Registra uma venda no histórico centralizado (usado pelo painel ADM)
-function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, valor, idPagamento, metodo, steamKey, supportCode }) {
+function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, valor, idPagamento, metodo }) {
   const sales = loadSales();
   const jaExiste = sales.some(s => s.id_pagamento === String(idPagamento));
   if (jaExiste) return;
@@ -408,14 +162,6 @@ function registrarVendaCentralizada({ emailUsuario, nomeUsuario, tituloJogo, val
     valor: Number(valor) || 0,
     metodo: metodo || "desconhecido",
     status: "approved",
-    // Quando há código de suporte, ele ocupa temporariamente o campo antigo
-    // para o frontend atual conseguir exibi-lo sem uma alteração imediata.
-    steam_key: supportCode || steamKey || null,
-    support_code: supportCode || null,
-    delivery_type: supportCode ? "manual_ticket" : "legacy",
-    support_code_status: supportCode ? "available" : null,
-    support_code_used_by_discord_id: null,
-    support_code_used_at: null,
     data: new Date().toISOString()
   });
   saveSales(sales);
@@ -666,22 +412,7 @@ app.get("/minhas-compras", verificarToken, (req, res) => {
       return res.status(404).json({ erro: "Usuário não encontrado." });
     }
 
-    const compras = (usuario.compras || []).map(compra => {
-      const codigoSuporte = compra.support_code || null;
-      return {
-        ...compra,
-        codigo_suporte: codigoSuporte,
-        support_code: codigoSuporte,
-        // Compatibilidade com o frontend atual. Não é uma Steam Key.
-        steam_key: codigoSuporte || compra.steam_key || null,
-        delivery_type: codigoSuporte ? "manual_ticket" : (compra.delivery_type || "legacy"),
-        mensagem_entrega: codigoSuporte
-          ? "Abra um ticket no Discord e envie este código para receber o jogo manualmente."
-          : null
-      };
-    });
-
-    return res.json(compras);
+    return res.json(usuario.compras || []);
   } catch (error) {
     console.error("Erro ao buscar compras:", error);
     return res.status(500).json({ erro: "Erro ao carregar o histórico de compras." });
@@ -691,7 +422,7 @@ app.get("/minhas-compras", verificarToken, (req, res) => {
 // Criar Pagamento via Cartão de Crédito/Débito
 app.post("/criar-pagamento-cartao", async (req, res) => {
   try {
-    const { token, payment_method_id, issuer_id, installments, valor, emailUsuario, tituloJogo, cpf, appId } = req.body;
+    const { token, payment_method_id, issuer_id, installments, valor, emailUsuario, tituloJogo, cpf } = req.body;
 
     if (!token || !payment_method_id || !valor || !emailUsuario || !tituloJogo) {
       return res.status(400).json({ erro: "Dados insuficientes para gerar o pagamento." });
@@ -709,8 +440,7 @@ app.post("/criar-pagamento-cartao", async (req, res) => {
         issuer_id: issuer_id ? Number(issuer_id) : undefined,
         metadata: {
           email_usuario: emailUsuario,
-          titulo_jogo: tituloJogo,
-          app_id: appId !== undefined && appId !== null ? String(appId) : null
+          titulo_jogo: tituloJogo
         },
         external_reference: uniqueId,
         payer: {
@@ -739,7 +469,7 @@ app.post("/criar-pagamento-cartao", async (req, res) => {
 // Criar Pagamento via Pix
 app.post("/criar-pix", async (req, res) => {
   try {
-    const { valor, emailUsuario, tituloJogo, appId, cupom } = req.body;
+    const { valor, emailUsuario, tituloJogo, produtoId, cupom, appId } = req.body;
 
     if (!valor || !emailUsuario || !tituloJogo) {
       return res.status(400).json({ erro: "Dados insuficientes para gerar o Pix." });
@@ -749,14 +479,9 @@ app.post("/criar-pix", async (req, res) => {
     let valorFinal = Number(valor);
     let cupomAplicado = null;
 
-    // Localizamos o produto do catálogo pelo appId (identificador da Steam),
-    // que é o dado que o frontend já tem disponível na vitrine de jogos.
-    const products = loadProducts();
-    const produtoComprado = appId ? products.find(p => Number(p.appId) === Number(appId)) : null;
-
     // Se um cupom foi informado, revalidamos tudo aqui no backend (nunca confiamos
     // só no valor que o navegador calculou) e recalculamos o valor final.
-    if (cupom && produtoComprado) {
+    if (cupom && produtoId) {
       const codigoNormalizado = String(cupom).trim().toUpperCase();
       const coupons = loadCoupons();
       const cupomEncontrado = coupons.find(c => c.codigo === codigoNormalizado);
@@ -765,7 +490,7 @@ app.post("/criar-pix", async (req, res) => {
           cupomEncontrado.active !== false &&
           (!cupomEncontrado.validoAte || new Date(cupomEncontrado.validoAte) >= new Date()) &&
           (cupomEncontrado.usosMaximos === null || cupomEncontrado.usosAtuais < cupomEncontrado.usosMaximos) &&
-          (cupomEncontrado.validoParaTodos || cupomEncontrado.produtosAplicaveis.includes(Number(produtoComprado.id)))) {
+          cupomEncontrado.produtosAplicaveis.includes(Number(produtoId))) {
         valorFinal = Number((valorFinal * (1 - cupomEncontrado.percentual / 100)).toFixed(2));
         cupomAplicado = codigoNormalizado;
       }
@@ -777,11 +502,11 @@ app.post("/criar-pix", async (req, res) => {
         transaction_amount: valorFinal,
         description: `Compra de ${tituloJogo} - Neplim Store`,
         payment_method_id: "pix",
-        // Vinculamos o e-mail do usuário, o jogo, o appId (para gerar a key depois) e o cupom (se houver)
+        // Vinculamos o e-mail do usuário, o jogo e o cupom (se houver) para recuperar no Webhook
         metadata: {
           email_usuario: emailUsuario,
           titulo_jogo: tituloJogo,
-          app_id: appId !== undefined && appId !== null ? String(appId) : null,
+          app_id: appId ? String(appId) : null,
           cupom_aplicado: cupomAplicado
         },
         external_reference: uniqueId,
@@ -817,37 +542,25 @@ app.get("/status-pagamento/:id", async (req, res) => {
     const { id } = req.params;
     const pagamento = await payment.get({ id });
 
-    let supportRecord = findSupportCodeByPaymentId(pagamento.id);
-    if (pagamento.status === "approved" && !supportRecord) {
+    // Se aprovado, tenta buscar a chave já salva no histórico do usuário
+    let chave = null;
+    if (pagamento.status === "approved") {
       const emailUsuario = pagamento.metadata?.email_usuario;
-      const users = loadUsers();
-      const user = emailUsuario
-        ? users.find(item => String(item.email || "").toLowerCase() === String(emailUsuario).toLowerCase())
-        : null;
-
-      supportRecord = ensureSupportCodeForPurchase({
-        paymentId: pagamento.id,
-        emailUsuario,
-        nomeUsuario: user?.nome || null,
-        tituloJogo: pagamento.metadata?.titulo_jogo,
-        valor: pagamento.transaction_amount,
-        metodo: pagamento.payment_method_id === "pix" ? "pix" : "cartao"
-      });
-      syncSupportCodeIntoPurchaseFiles(supportRecord);
+      if (emailUsuario) {
+        const users = loadUsers();
+        const usuario = users.find(u => u.email.toLowerCase() === emailUsuario.toLowerCase());
+        if (usuario) {
+          const compra = (usuario.compras || []).find(c => c.id_pagamento === String(id));
+          if (compra?.chave) chave = compra.chave;
+        }
+      }
     }
 
     return res.json({
       id: pagamento.id,
       status: pagamento.status,
       status_detail: pagamento.status_detail,
-      codigo_suporte: pagamento.status === "approved" ? supportRecord?.code || null : null,
-      support_code: pagamento.status === "approved" ? supportRecord?.code || null : null,
-      // Compatibilidade com o frontend atual. Este valor NÃO é uma Steam Key.
-      steam_key: pagamento.status === "approved" ? supportRecord?.code || null : null,
-      delivery_type: pagamento.status === "approved" ? "manual_ticket" : null,
-      mensagem_entrega: pagamento.status === "approved"
-        ? "Abra um ticket no Discord e envie o código NEPLIM para receber o jogo manualmente."
-        : null
+      chave
     });
   } catch (error) {
     console.error("Erro ao consultar status do pagamento:", error);
@@ -872,9 +585,22 @@ app.post("/webhook-mercadopago", async (req, res) => {
           // Extraímos as informações salvas lá na rota /criar-pix ou /criar-pagamento-cartao
           const emailUsuario = pagamento.metadata?.email_usuario;
           const tituloJogo = pagamento.metadata?.titulo_jogo;
+          const appId = pagamento.metadata?.app_id || null;
           const valorPago = pagamento.transaction_amount;
           const metodoPagamento = pagamento.payment_method_id === "pix" ? "pix" : "cartao";
           const cupomUsado = pagamento.metadata?.cupom_aplicado;
+
+          // Gera a chave real via ShadowKeys (só se tiver appId vinculado ao produto)
+          let chaveGerada = null;
+          if (appId) {
+            try {
+              const keys = await gerarChaveShadowKeys(appId, 1);
+              chaveGerada = keys?.[0]?.code || null;
+              console.log(`Chave ShadowKeys gerada para appId ${appId}: ${chaveGerada}`);
+            } catch (errKey) {
+              console.error("Erro ao gerar chave ShadowKeys:", errKey.message);
+            }
+          }
 
           // Incrementa o contador de usos do cupom (uma única vez por pagamento aprovado)
           if (cupomUsado) {
@@ -890,8 +616,6 @@ app.post("/webhook-mercadopago", async (req, res) => {
               }
             }
           }
-          // Nenhuma Steam Key é gerada automaticamente.
-          // O código de suporte abaixo será entregue ao cliente para abrir um ticket.
 
           // Registra no histórico centralizado de vendas (painel ADM), independente
           // de o e-mail corresponder a um usuário cadastrado — a venda no Mercado
@@ -903,24 +627,13 @@ app.post("/webhook-mercadopago", async (req, res) => {
             : null;
           if (userEncontradoParaNome) nomeUsuarioEncontrado = userEncontradoParaNome.nome;
 
-          const supportRecord = ensureSupportCodeForPurchase({
-            paymentId,
-            emailUsuario,
-            nomeUsuario: nomeUsuarioEncontrado,
-            tituloJogo,
-            valor: valorPago,
-            metodo: metodoPagamento
-          });
-
           registrarVendaCentralizada({
             emailUsuario,
             nomeUsuario: nomeUsuarioEncontrado,
             tituloJogo,
             valor: valorPago,
             idPagamento: paymentId,
-            metodo: metodoPagamento,
-            steamKey: null,
-            supportCode: supportRecord.code
+            metodo: metodoPagamento
           });
 
           if (emailUsuario) {
@@ -936,21 +649,14 @@ app.post("/webhook-mercadopago", async (req, res) => {
               const compraJaExiste = users[indexUsuario].compras.some(c => c.id_pagamento === paymentId.toString());
 
               if (!compraJaExiste) {
-                // Adiciona a nova compra ao histórico do usuário
+                // Adiciona a nova compra ao histórico do usuário (com chave se gerada)
                 users[indexUsuario].compras.push({
                   id: uuidv4(),
                   id_pagamento: paymentId.toString(),
                   titulo_jogo: tituloJogo || "Jogo Digital",
                   valor: valorPago,
                   status: "approved",
-                  // O frontend atual lê steam_key; aqui guardamos o código do ticket.
-                  // Não é uma Steam Key de ativação.
-                  steam_key: supportRecord.code,
-                  support_code: supportRecord.code,
-                  delivery_type: "manual_ticket",
-                  support_code_status: "available",
-                  support_code_used_by_discord_id: null,
-                  support_code_used_at: null,
+                  chave: chaveGerada || null,
                   data: new Date().toISOString()
                 });
 
@@ -961,9 +667,6 @@ app.post("/webhook-mercadopago", async (req, res) => {
               console.log(`Aviso: Pagamento aprovado mas usuário correspondente (${emailUsuario}) não foi localizado.`);
             }
           }
-
-          // Garante que vendas/compras já existentes também recebam o mesmo código.
-          syncSupportCodeIntoPurchaseFiles(supportRecord);
         }
       }
     }
@@ -1110,21 +813,6 @@ app.put("/admin/produtos/:id", verificarTokenAdmin, (req, res) => {
   }
 });
 
-// Converte um preço no formato "R$ 9,99" para número (9.99)
-function parsePrecoBRL(precoStr) {
-  if (typeof precoStr === "number") return precoStr;
-  if (!precoStr) return 0;
-  const limpo = String(precoStr).replace(/[^\d,.-]/g, "").replace(",", ".");
-  const numero = parseFloat(limpo);
-  return isNaN(numero) ? 0 : numero;
-}
-
-// Converte um número (9.99) para o formato "R$ 9,99"
-function formatarPrecoBRL(numero) {
-  const arredondado = Math.max(0, Number(numero)).toFixed(2);
-  return `R$ ${arredondado.replace(".", ",")}`;
-}
-
 // Remove um produto
 app.delete("/admin/produtos/:id", verificarTokenAdmin, (req, res) => {
   try {
@@ -1146,58 +834,6 @@ app.delete("/admin/produtos/:id", verificarTokenAdmin, (req, res) => {
   }
 });
 
-// Ajusta o preço de vários produtos de uma vez (todos, ou filtrados por categoria)
-// Aceita dois modos:
-//   modo "fixo"       -> define o mesmo preço para todos os produtos afetados
-//   modo "percentual" -> aplica um ajuste (+ ou -) sobre o preço atual de cada produto
-app.post("/admin/produtos/ajuste-em-massa", verificarTokenAdmin, (req, res) => {
-  try {
-    const { modo, valor, categoria } = req.body;
-
-    if (!modo || (modo !== "fixo" && modo !== "percentual")) {
-      return res.status(400).json({ erro: "Informe o modo do ajuste: 'fixo' ou 'percentual'." });
-    }
-    if (valor === undefined || valor === null || isNaN(Number(valor))) {
-      return res.status(400).json({ erro: "Informe um valor numérico válido." });
-    }
-    if (modo === "fixo" && Number(valor) < 0) {
-      return res.status(400).json({ erro: "O preço fixo não pode ser negativo." });
-    }
-
-    const products = loadProducts();
-    let afetados = 0;
-
-    const atualizados = products.map(produto => {
-      // Se uma categoria foi informada, só altera produtos daquela categoria.
-      // Se não foi informada (ou veio "todas"), aplica em todos os produtos.
-      const dentroDoFiltro = !categoria || categoria === "todas" || produto.category === categoria;
-      if (!dentroDoFiltro) return produto;
-
-      afetados++;
-      let novoPrecoNumero;
-
-      if (modo === "fixo") {
-        novoPrecoNumero = Number(valor);
-      } else {
-        const precoAtual = parsePrecoBRL(produto.price);
-        novoPrecoNumero = precoAtual * (1 + Number(valor) / 100);
-      }
-
-      return { ...produto, price: formatarPrecoBRL(novoPrecoNumero) };
-    });
-
-    saveProducts(atualizados);
-
-    return res.json({
-      mensagem: `Preço atualizado em ${afetados} produto${afetados !== 1 ? "s" : ""}.`,
-      produtosAfetados: afetados
-    });
-  } catch (error) {
-    console.error("Erro ao ajustar preços em massa:", error);
-    return res.status(500).json({ erro: "Erro ao ajustar preços em massa." });
-  }
-});
-
 // ═══════════════════════════════════════════════
 // PAINEL ADM — CUPONS DE DESCONTO
 // ═══════════════════════════════════════════════
@@ -1213,10 +849,10 @@ app.get("/admin/cupons", verificarTokenAdmin, (req, res) => {
   }
 });
 
-// Cria um novo cupom de desconto (percentual, válido para produtos específicos ou para todos)
+// Cria um novo cupom de desconto (percentual, válido para produtos específicos)
 app.post("/admin/cupons", verificarTokenAdmin, (req, res) => {
   try {
-    const { codigo, percentual, produtosAplicaveis, validoParaTodos, validoAte, usosMaximos, active } = req.body;
+    const { codigo, percentual, produtosAplicaveis, validoAte, usosMaximos, active } = req.body;
 
     if (!codigo || !percentual) {
       return res.status(400).json({ erro: "Código e percentual de desconto são obrigatórios." });
@@ -1224,9 +860,8 @@ app.post("/admin/cupons", verificarTokenAdmin, (req, res) => {
     if (Number(percentual) <= 0 || Number(percentual) > 100) {
       return res.status(400).json({ erro: "O percentual de desconto deve ser entre 1 e 100." });
     }
-    // Só exigimos a lista de produtos se o cupom NÃO for válido para todos
-    if (!validoParaTodos && (!Array.isArray(produtosAplicaveis) || produtosAplicaveis.length === 0)) {
-      return res.status(400).json({ erro: "Selecione ao menos um produto para o cupom, ou marque 'válido para todos'." });
+    if (!Array.isArray(produtosAplicaveis) || produtosAplicaveis.length === 0) {
+      return res.status(400).json({ erro: "Selecione ao menos um produto para o cupom." });
     }
 
     const codigoNormalizado = String(codigo).trim().toUpperCase();
@@ -1241,10 +876,8 @@ app.post("/admin/cupons", verificarTokenAdmin, (req, res) => {
       id: uuidv4(),
       codigo: codigoNormalizado,
       percentual: Number(percentual),
-      // Se validoParaTodos for true, ignoramos a lista específica de produtos
-      validoParaTodos: !!validoParaTodos,
       // IDs dos produtos (do products.json) em que o cupom pode ser aplicado
-      produtosAplicaveis: validoParaTodos ? [] : produtosAplicaveis.map(id => Number(id)),
+      produtosAplicaveis: produtosAplicaveis.map(id => Number(id)),
       validoAte: validoAte || null, // data ISO; null = sem expiração
       usosMaximos: usosMaximos ? Number(usosMaximos) : null, // null = ilimitado
       usosAtuais: 0,
@@ -1279,10 +912,6 @@ app.put("/admin/cupons/:id", verificarTokenAdmin, (req, res) => {
     }
     if (dadosAtualizados.produtosAplicaveis) {
       dadosAtualizados.produtosAplicaveis = dadosAtualizados.produtosAplicaveis.map(pid => Number(pid));
-    }
-    // Se o cupom passou a ser válido para todos, esvaziamos a lista específica
-    if (dadosAtualizados.validoParaTodos) {
-      dadosAtualizados.produtosAplicaveis = [];
     }
 
     // Preserva o ID e o contador de usos já realizados
@@ -1325,13 +954,13 @@ app.delete("/admin/cupons/:id", verificarTokenAdmin, (req, res) => {
 // ═══════════════════════════════════════════════
 // ROTA PÚBLICA — VALIDAR CUPOM NO CHECKOUT
 // ═══════════════════════════════════════════════
-// Recebe o código digitado pelo cliente e o appId do jogo no carrinho.
+// Recebe o código digitado pelo cliente e o ID do produto no carrinho.
 // Retorna o percentual de desconto se o cupom for válido para aquele produto.
 app.post("/validar-cupom", (req, res) => {
   try {
-    const { codigo, appId } = req.body;
+    const { codigo, produtoId } = req.body;
 
-    if (!codigo || !appId) {
+    if (!codigo || !produtoId) {
       return res.status(400).json({ erro: "Informe o código do cupom e o produto." });
     }
 
@@ -1351,12 +980,8 @@ app.post("/validar-cupom", (req, res) => {
     if (cupom.usosMaximos !== null && cupom.usosAtuais >= cupom.usosMaximos) {
       return res.status(400).json({ erro: "Este cupom já atingiu o limite de usos." });
     }
-    if (!cupom.validoParaTodos) {
-      const products = loadProducts();
-      const produto = products.find(p => Number(p.appId) === Number(appId));
-      if (!produto || !cupom.produtosAplicaveis.includes(Number(produto.id))) {
-        return res.status(400).json({ erro: "Este cupom não é válido para o produto selecionado." });
-      }
+    if (!cupom.produtosAplicaveis.includes(Number(produtoId))) {
+      return res.status(400).json({ erro: "Este cupom não é válido para o produto selecionado." });
     }
 
     return res.json({
@@ -1368,30 +993,6 @@ app.post("/validar-cupom", (req, res) => {
     return res.status(500).json({ erro: "Erro ao validar cupom." });
   }
 });
-
-// Cria códigos para vendas aprovadas antigas que ainda não possuam comprovante.
-function backfillApprovedSupportCodes() {
-  try {
-    const sales = loadSales();
-    for (const sale of sales) {
-      if (sale.status !== "approved" || !sale.id_pagamento) continue;
-
-      const record = ensureSupportCodeForPurchase({
-        paymentId: sale.id_pagamento,
-        emailUsuario: sale.email_usuario,
-        nomeUsuario: sale.nome_usuario,
-        tituloJogo: sale.titulo_jogo,
-        valor: sale.valor,
-        metodo: sale.metodo
-      });
-      syncSupportCodeIntoPurchaseFiles(record);
-    }
-  } catch (error) {
-    console.error("Erro ao criar códigos para vendas antigas:", error);
-  }
-}
-
-backfillApprovedSupportCodes();
 
 // Inicialização do servidor
 const PORT = process.env.PORT || 3001;
