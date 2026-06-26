@@ -1774,6 +1774,7 @@ function GamesGrid({ category, search, onGame }: { category: string; search: str
    NUUVEM-STYLE PRODUCT PAGE MODAL
 ═══════════════════════════════════════════════════════════ */
 interface PurchaseItem {
+  id?: number;
   title: string;
   price: string;
   originalPrice?: string;
@@ -2559,8 +2560,8 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
     setCouponLoading(true);
     try {
       const prodId = isCartCheckout
-        ? cartItems?.[0]?.appId
-        : (item as any)?.appId ?? (item as any)?.id;
+        ? cartItems?.[0]?.id
+        : (item as any)?.id;
       const res = await fetch(`${API_BASE}/validar-cupom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4158,7 +4159,7 @@ export default function NeplimStore() {
   const handleAddToCart = (item: any, variantLabel: string) => {
     if (!isLoggedIn) { setShowLogin(true); return; }
     cart.addToCart(
-      { title: item.title, price: item.price, originalPrice: item.originalPrice, discount: item.discount, appId: item.appId, variants: item.variants },
+      { id: (item as any).id, title: item.title, price: item.price, originalPrice: item.originalPrice, discount: item.discount, appId: item.appId, variants: item.variants },
       variantLabel
     );
   };
@@ -4184,12 +4185,12 @@ export default function NeplimStore() {
         <main style={{ flex:1 }}>
           <HeroSlider onBuy={g => {
             const jogo = ALL_GAMES.find(j => j.title.toLowerCase() === g.title.toLowerCase() || j.appId === g.appId);
-            if (jogo) openProduct({ title:jogo.title, price:jogo.price, originalPrice:jogo.originalPrice, discount:jogo.discount, appId:jogo.appId, variants:jogo.variants });
+            if (jogo) openProduct({ id:jogo.id, title:jogo.title, price:jogo.price, originalPrice:jogo.originalPrice, discount:jogo.discount, appId:jogo.appId, variants:jogo.variants });
             else openProduct({ title:g.title, price:g.price, appId:g.appId });
           }} />
           <CategoriesSection selected={category} onSelect={setCategory} />
           <GamesGrid category={category} search={search}
-            onGame={g => openProduct({ title:g.title, price:g.price, originalPrice:g.originalPrice, discount:g.discount, appId:g.appId, variants:g.variants })}
+            onGame={g => openProduct({ id:g.id, title:g.title, price:g.price, originalPrice:g.originalPrice, discount:g.discount, appId:g.appId, variants:g.variants })}
           />
         </main>
 
