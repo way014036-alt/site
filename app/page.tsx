@@ -2559,13 +2559,13 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
     setCouponMsg('');
     setCouponLoading(true);
     try {
-      const prodId = isCartCheckout
-        ? cartItems?.[0]?.id
-        : (item as any)?.id;
+      const appId = isCartCheckout
+        ? cartItems?.[0]?.appId
+        : (item as any)?.appId;
       const res = await fetch(`${API_BASE}/validar-cupom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo: c, produtoId: prodId })
+        body: JSON.stringify({ codigo: c, appId })
       });
       const data = await res.json();
       if (!res.ok) {
