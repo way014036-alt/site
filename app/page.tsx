@@ -3494,6 +3494,7 @@ interface AdminSale {
   valor: number;
   metodo: string;
   status: string;
+  chave?: string | null;
   data: string;
 }
 
