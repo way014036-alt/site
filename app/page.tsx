@@ -2549,11 +2549,37 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const applyCoupon = () => {
+  const [couponMsg, setCouponMsg] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const applyCoupon = async () => {
     const c = coupon.trim().toUpperCase();
-    if (c === 'NEPLIM10') setDiscount(subtotal * 0.1);
-    else if (c === 'DESCONTO5') setDiscount(5);
-    else { setDiscount(0); alert('Cupom inválido.'); }
+    if (!c) return;
+    setCouponMsg('');
+    setCouponLoading(true);
+    try {
+      const prodId = isCartCheckout
+        ? cartItems?.[0]?.appId ?? item?.id
+        : (item as any)?.id;
+      const res = await fetch(`${API_BASE}/validar-cupom`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo: c, produtoId: prodId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDiscount(0);
+        setCouponMsg(data.erro || 'Cupom inválido.');
+      } else {
+        const desc = subtotal * (data.percentual / 100);
+        setDiscount(desc);
+        setCouponMsg(`✓ Cupom aplicado! -${data.percentual}% de desconto`);
+      }
+    } catch {
+      setCouponMsg('Erro ao validar cupom. Tente novamente.');
+    } finally {
+      setCouponLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -2877,10 +2903,15 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
           )}
 
           {/* Coupon */}
-          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-            <input value={coupon} onChange={e=>setCoupon(e.target.value)} placeholder="Digite seu cupom de desconto" style={{ flex:1, minWidth:0, background:'#111', border:'1px solid #2a2a2a', borderRadius:8, padding:'9px 12px', color:'#ccc', fontSize:13, outline:'none' }} />
-            <button onClick={applyCoupon} style={{ background:'#222', border:'1px solid #333', borderRadius:8, color:'#ccc', fontSize:13, fontWeight:600, padding:'9px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap', flexShrink:0 }}><CreditCard size={13} /> Aplicar</button>
+          <div style={{ display:'flex', gap:8, marginBottom:4 }}>
+            <input value={coupon} onChange={e=>{ setCoupon(e.target.value); setCouponMsg(''); }} placeholder="Digite seu cupom de desconto" style={{ flex:1, minWidth:0, background:'#111', border:'1px solid #2a2a2a', borderRadius:8, padding:'9px 12px', color:'#ccc', fontSize:13, outline:'none' }} />
+            <button onClick={applyCoupon} disabled={couponLoading} style={{ background: couponLoading ? '#333' : '#222', border:'1px solid #333', borderRadius:8, color:'#ccc', fontSize:13, fontWeight:600, padding:'9px 16px', cursor: couponLoading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap', flexShrink:0 }}>
+              {couponLoading ? '...' : 'Aplicar'}
+            </button>
           </div>
+          {couponMsg && (
+            <p style={{ fontSize:12, marginBottom:12, color: discount > 0 ? '#4caf6e' : '#FF6B6B' }}>{couponMsg}</p>
+          )}
 
           <div style={{ height:1, background:'#2a2a2a', margin:'4px 0 12px' }} />
           <div style={{ display:'flex', justifyContent:'space-between', fontSize:14, color:'#aaa', marginBottom:6 }}><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
@@ -3432,7 +3463,19 @@ function AdminCouponFormModal({
           </div>
 
           <div>
-            <label style={labelStyle}>Produtos aplicáveis * ({produtosSelecionados.length} selecionado{produtosSelecionados.length !== 1 ? 's' : ''})</label>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+              <label style={{ ...labelStyle, margin:0 }}>Produtos aplicáveis * ({produtosSelecionados.length} selecionado{produtosSelecionados.length !== 1 ? 's' : ''})</label>
+              <div style={{ display:'flex', gap:6 }}>
+                <button type="button" onClick={() => setProdutosSelecionados(products.map(p => p.id))}
+                  style={{ background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', borderRadius:6, padding:'4px 12px', fontSize:11, fontWeight:700, cursor:'pointer' }}>
+                  ✓ Todos os jogos
+                </button>
+                <button type="button" onClick={() => setProdutosSelecionados([])}
+                  style={{ background:'rgba(255,107,107,0.15)', border:'1px solid rgba(255,107,107,0.3)', color:'#FF6B6B', borderRadius:6, padding:'4px 12px', fontSize:11, fontWeight:700, cursor:'pointer' }}>
+                  ✕ Limpar
+                </button>
+              </div>
+            </div>
             <input value={productSearch} onChange={e=>setProductSearch(e.target.value)} placeholder="🔍  Buscar produto..."
               style={{ ...inputStyle, marginBottom:8 }} onFocus={focusStyle} onBlur={blurStyle} />
             <div style={{ maxHeight:180, overflowY:'auto', border:`1px solid ${C.border}`, borderRadius:8, background:C.surface }}>
