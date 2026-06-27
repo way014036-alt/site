@@ -1144,36 +1144,105 @@ function useGlobalStyles() {
       body { background:#000000; color:${C.text}; font-family:'Segoe UI',system-ui,sans-serif; overflow-x:hidden; }
       ::-webkit-scrollbar { width:6px; }
       ::-webkit-scrollbar-track { background:#050505; }
-      ::-webkit-scrollbar-thumb { background:${C.primary}; border-radius:3px; }
+      ::-webkit-scrollbar-thumb { background:linear-gradient(180deg,${C.primary},${C.secondary}); border-radius:3px; }
+      ::-webkit-scrollbar-thumb:hover { background:${C.secondary}; }
       input, button, textarea, select { font-family:inherit; }
       img { display:block; }
-      .game-card { transition:transform 0.25s ease, box-shadow 0.25s ease; cursor:pointer; }
-      .game-card:hover { transform:translateY(-6px) scale(1.02); box-shadow:0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(123,47,190,0.5), 0 0 60px rgba(123,47,190,0.2); }
-      .game-card:hover .card-img { filter:brightness(1.08) saturate(1.15); }
-      .card-img { transition:filter 0.25s ease; }
-      .btn-glow { transition:background 0.2s, box-shadow 0.2s, transform 0.1s; }
-      .btn-glow:hover { background:${C.primaryHover} !important; box-shadow:0 0 30px rgba(123,47,190,0.8), 0 0 60px rgba(123,47,190,0.4) !important; }
-      .btn-glow:active { transform:scale(0.97); }
-      .acc-card { transition:transform 0.2s ease, border-color 0.2s ease; cursor:pointer; }
-      .acc-card:hover { transform:translateY(-5px); border-color:rgba(199,125,255,0.55) !important; }
-      .cat-pill { transition:all 0.2s; cursor:pointer; }
-      .cat-pill:hover { border-color:${C.primary} !important; color:white !important; }
-      .thumb:hover { opacity:1 !important; border-color:${C.secondary} !important; }
+
+      /* ── GAME CARDS ── */
+      .game-card { transition:transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s ease; cursor:pointer; position:relative; }
+      .game-card::before { content:''; position:absolute; inset:0; border-radius:14px; background:linear-gradient(135deg,rgba(123,47,190,0.15),transparent); opacity:0; transition:opacity 0.3s; z-index:1; pointer-events:none; }
+      .game-card:hover { transform:translateY(-10px) scale(1.03); box-shadow:0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(123,47,190,0.6), 0 0 80px rgba(123,47,190,0.25), inset 0 0 0 1px rgba(199,125,255,0.3); }
+      .game-card:hover::before { opacity:1; }
+      .game-card:hover .card-img { filter:brightness(1.12) saturate(1.2); transform:scale(1.04); }
+      .card-img { transition:filter 0.3s ease, transform 0.3s ease; }
+
+      /* ── BUTTONS ── */
+      .btn-glow { transition:background 0.2s, box-shadow 0.3s, transform 0.15s; position:relative; overflow:hidden; }
+      .btn-glow::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent); opacity:0; transition:opacity 0.2s; }
+      .btn-glow:hover { box-shadow:0 0 35px rgba(123,47,190,0.9), 0 0 70px rgba(123,47,190,0.45) !important; transform:translateY(-2px); }
+      .btn-glow:hover::after { opacity:1; }
+      .btn-glow:active { transform:scale(0.96) translateY(0); }
+
+      /* ── NAVIGATION ── */
+      .nav-link { position:relative; transition:color 0.2s; }
+      .nav-link::after { content:''; position:absolute; bottom:-4px; left:0; width:0; height:2px; background:linear-gradient(90deg,${C.primary},${C.secondary}); transition:width 0.3s ease; border-radius:2px; }
       .nav-link:hover { color:${C.secondary} !important; }
+      .nav-link:hover::after { width:100%; }
+
+      /* ── CATEGORY PILLS ── */
+      .cat-pill { transition:all 0.25s cubic-bezier(.34,1.56,.64,1); cursor:pointer; }
+      .cat-pill:hover { border-color:${C.primary} !important; color:white !important; transform:translateY(-2px) scale(1.05); box-shadow:0 6px 20px rgba(123,47,190,0.4); }
+
+      /* ── ACC CARDS ── */
+      .acc-card { transition:transform 0.3s cubic-bezier(.34,1.56,.64,1), border-color 0.3s ease, box-shadow 0.3s ease; cursor:pointer; }
+      .acc-card:hover { transform:translateY(-7px) scale(1.02); border-color:rgba(199,125,255,0.6) !important; box-shadow:0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(123,47,190,0.3); }
+
+      /* ── MISC ── */
+      .thumb:hover { opacity:1 !important; border-color:${C.secondary} !important; transform:scale(1.05); transition:all 0.2s; }
+      .variant-radio:hover { border-color:rgba(199,125,255,0.7) !important; background:rgba(123,47,190,0.1) !important; transform:scale(1.02); }
+      .buy-btn-main:hover { background:#e8e8e8 !important; transform:translateY(-1px); box-shadow:0 8px 25px rgba(255,255,255,0.15) !important; }
+      .cart-btn:hover { background:rgba(123,47,190,0.2) !important; border-color:rgba(199,125,255,0.6) !important; transform:translateY(-1px); }
+      .adm-btn-edit:hover { color:${C.accent} !important; text-shadow:0 0 10px rgba(199,125,255,0.6); }
+      .adm-btn-del:hover { text-shadow:0 0 10px rgba(255,107,107,0.6); }
+      .adm-row { transition:background 0.2s; }
+      .adm-row:hover { background:rgba(123,47,190,0.07) !important; }
+
+      /* ── KEYFRAMES ── */
       @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-      @keyframes gameFadeIn { from{transform:translateY(24px); opacity:0} to{transform:translateY(0); opacity:1} }
-      @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
-      @keyframes heroBg { from{opacity:0;transform:scale(1.08)} to{opacity:1;transform:scale(1.05)} }
-      @keyframes purplePulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+      @keyframes fadeInDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+      @keyframes gameFadeIn { from{transform:translateY(28px) scale(0.97);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
+      @keyframes slideUp { from{transform:translateY(40px) scale(0.97);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
+      @keyframes slideInLeft { from{transform:translateX(-30px);opacity:0} to{transform:translateX(0);opacity:1} }
+      @keyframes slideInRight { from{transform:translateX(30px);opacity:0} to{transform:translateX(0);opacity:1} }
+      @keyframes heroBg { from{opacity:0;transform:scale(1.1)} to{opacity:1;transform:scale(1.05)} }
+      @keyframes purplePulse { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.05)} }
       @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-      .modal-overlay { animation:fadeIn 0.2s ease; }
-      .modal-box { animation:slideUp 0.3s ease; }
-      .hero-slide-anim { animation:fadeIn 0.5s ease; }
-      .hero-bg { animation:heroBg 0.8s ease forwards; }
+      @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+      @keyframes floatUp { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+      @keyframes glowPulse { 0%,100%{box-shadow:0 0 20px rgba(123,47,190,0.4)} 50%{box-shadow:0 0 50px rgba(123,47,190,0.9),0 0 90px rgba(123,47,190,0.4)} }
+      @keyframes borderGlow { 0%,100%{border-color:rgba(123,47,190,0.3)} 50%{border-color:rgba(199,125,255,0.7)} }
+      @keyframes particleFloat { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-120px) rotate(360deg);opacity:0} }
+      @keyframes ripple { 0%{transform:scale(0);opacity:0.6} 100%{transform:scale(4);opacity:0} }
+      @keyframes adminFadeIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+      @keyframes adminSlideIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+      @keyframes countUp { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
+      @keyframes neonFlicker { 0%,19%,21%,23%,25%,54%,56%,100%{text-shadow:0 0 10px ${C.secondary},0 0 20px ${C.secondary},0 0 40px ${C.primary}} 20%,24%,55%{text-shadow:none} }
+      @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+      @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+      @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+      @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.1)} 28%{transform:scale(1)} 42%{transform:scale(1.08)} 70%{transform:scale(1)} }
+
+      /* ── APPLIED ANIMATIONS ── */
+      .modal-overlay { animation:fadeIn 0.25s ease; }
+      .modal-box { animation:slideUp 0.35s cubic-bezier(.34,1.56,.64,1); }
+      .hero-slide-anim { animation:fadeIn 0.6s ease; }
+      .hero-bg { animation:heroBg 1s ease forwards; }
       .purple-orb { animation:purplePulse 4s ease-in-out infinite; }
-      .variant-radio:hover { border-color:rgba(199,125,255,0.7) !important; background:rgba(123,47,190,0.08) !important; }
-      .buy-btn-main:hover { background:#e8e8e8 !important; }
-      .cart-btn:hover { background:rgba(123,47,190,0.18) !important; border-color:rgba(199,125,255,0.5) !important; }
+      .float-badge { animation:floatUp 3s ease-in-out infinite; }
+      .glow-card { animation:glowPulse 3s ease-in-out infinite; }
+      .border-glow { animation:borderGlow 2.5s ease-in-out infinite; }
+      .checkout-modal { animation:slideUp 0.4s cubic-bezier(.34,1.56,.64,1); }
+      .key-reveal { animation:popIn 0.5s cubic-bezier(.34,1.56,.64,1); }
+      .stat-num { animation:countUp 0.6s cubic-bezier(.34,1.56,.64,1) both; }
+      .pop-in { animation:popIn 0.4s cubic-bezier(.34,1.56,.64,1); }
+
+      /* ── SHIMMER SKELETON ── */
+      .shimmer { background:linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.03) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
+
+      /* ── NEON TEXT ── */
+      .neon-text { animation:neonFlicker 5s infinite; }
+
+      /* ── GRADIENT ANIMATED BG ── */
+      .gradient-animated { background:linear-gradient(270deg,${C.primary},${C.secondary},#8b5cf6,${C.primary}); background-size:400% 400%; animation:gradientShift 6s ease infinite; }
+
+      /* ── RIPPLE EFFECT ── */
+      .ripple-btn { position:relative; overflow:hidden; }
+      .ripple-btn::after { content:''; position:absolute; width:20px; height:20px; background:rgba(255,255,255,0.4); border-radius:50%; transform:scale(0); top:50%; left:50%; margin:-10px; animation:ripple 0.6s ease-out; }
+      .ripple-btn:active::after { animation:ripple 0.6s ease-out; }
+
+      /* ── SCROLLBAR CUSTOM ── */
+      * { scrollbar-width:thin; scrollbar-color:${C.primary} #050505; }
     `;
     document.head.appendChild(el);
     return () => { document.head.removeChild(el); };
@@ -1687,10 +1756,11 @@ function GamesGrid({ category, search, onGame }: { category: string; search: str
   return (
     <section style={{ maxWidth:1400, margin:'0 auto', padding:'44px 24px 70px', position:'relative' }}>
       <div className="purple-orb" style={{ position:'absolute', top:-80, left:-100, width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(123,47,190,0.18) 0%, transparent 70%)', pointerEvents:'none', zIndex:0 }} />
+      <div className="purple-orb" style={{ position:'absolute', bottom:-100, right:-80, width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(157,78,221,0.14) 0%, transparent 70%)', pointerEvents:'none', zIndex:0, animationDelay:'2s' }} />
 
       <div style={{ position:'relative', zIndex:1 }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:22 }}>
-          <h2 style={{ fontSize:22, fontWeight:800, color:C.textLight }}>Jogos Steam</h2>
+          <h2 style={{ fontSize:22, fontWeight:800, background:`linear-gradient(90deg,${C.textLight},${C.secondary},${C.textLight})`, backgroundSize:'200% auto', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', animation:'shimmer 3s linear infinite' }}>Jogos Steam</h2>
           <span style={{ background:'rgba(123,47,190,0.2)', color:C.secondary, border:`1px solid ${C.border}`, padding:'3px 10px', borderRadius:20, fontSize:12, fontWeight:600 }}>{list.length} jogos</span>
           <span style={{ marginLeft:'auto', color:C.textMuted, fontSize:13 }}>Exibindo {visible.length} de {list.length}</span>
         </div>
@@ -4300,6 +4370,23 @@ export default function NeplimStore() {
       <div style={{ position:'fixed', top:0, left:0, right:0, height:'100vh', pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
         <div className="purple-orb" style={{ position:'absolute', top:'-20%', left:'-10%', width:700, height:700, borderRadius:'50%', background:'radial-gradient(circle, rgba(123,47,190,0.12) 0%, transparent 65%)' }} />
         <div className="purple-orb" style={{ position:'absolute', top:'30%', right:'-15%', width:800, height:800, borderRadius:'50%', background:'radial-gradient(circle, rgba(157,78,221,0.08) 0%, transparent 65%)', animationDelay:'2.5s' }} />
+        <div className="purple-orb" style={{ position:'absolute', bottom:'-10%', left:'30%', width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(123,47,190,0.1) 0%, transparent 65%)', animationDelay:'1.2s' }} />
+        {[...Array(12)].map((_,i) => (
+          <div key={i} style={{
+            position:'absolute',
+            width: `${4 + (i % 4) * 3}px`,
+            height: `${4 + (i % 4) * 3}px`,
+            borderRadius:'50%',
+            background: i % 3 === 0 ? 'rgba(199,125,255,0.6)' : i % 3 === 1 ? 'rgba(123,47,190,0.5)' : 'rgba(255,255,255,0.3)',
+            left: `${8 + (i * 7.5) % 85}%`,
+            top: `${10 + (i * 13) % 75}%`,
+            animation: `particleFloat ${3 + (i % 4)}s ease-in-out infinite`,
+            animationDelay: `${(i * 0.4) % 3}s`,
+            pointerEvents:'none',
+            filter:'blur(1px)',
+            zIndex:0
+          }} />
+        ))}
       </div>
 
       <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', minHeight:'100vh' }}>
