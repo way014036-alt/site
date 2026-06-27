@@ -1959,7 +1959,7 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
     : fallbackCover;
 
   const faqData = [
-    { q: "Como vou receber o jogo?", a: "Imediatamente após a aprovação do Pix, a sua chave de ativação oficial da Steam é exibida na tela e enviada ao seu e-mail cadastrado." },
+    { q: "Como vou receber o jogo?", a: "Após a aprovação do pagamento, um código de resgate é exibido na tela e salvo em 'Minhas Compras'. Basta abrir um ticket na aba COMPRAS do nosso servidor do Discord e enviar o código para receber sua Steam Key." },
     { q: "O jogo é original e vitalício?", a: "Sim, todos os nossos produtos são licenças digitais oficiais adquiridas legalmente, vinculando-se para sempre à sua biblioteca." },
     { q: "Posso pedir reembolso caso desista?", a: "Por se tratar de um produto digital que é revelado instantaneamente, só realizamos trocas se houver algum problemático técnico comprovado na chave antes do uso." },
     { q: "O jogo funciona em qualquer região?", a: "Sim, garantimos ativação global livre de restrições de região (Worldwide Region Free)." }
@@ -2455,6 +2455,8 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
           valor: total,
           emailUsuario: accountEmail || email,
           tituloJogo: isCartCheckout ? effectiveItem.title : `${qty}x ${item.title}`,
+          appId: isCartCheckout ? cartItems?.[0]?.appId : (item as any)?.appId,
+          cupom: couponPercent > 0 ? coupon.trim().toUpperCase() : undefined,
           cpf: cpfDigits
         })
       });
@@ -2464,7 +2466,7 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
 
       if (data.status === 'approved') {
         setPaymentStatus('approved');
-        setGameKey(data.chave || gerarKeyAleatoria());
+        setGameKey(data.chave || data.steam_key || data.support_code || data.codigo_suporte || data.code || gerarKeyAleatoria());
         setDone(true);
         onCheckoutSuccess?.();
       } else if (data.status === 'in_process' || data.status === 'pending') {
@@ -2522,7 +2524,9 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
         body: JSON.stringify({
           valor: total,
           emailUsuario: accountEmail || email,
-          tituloJogo: isCartCheckout ? effectiveItem.title : `${qty}x ${item.title}`
+          tituloJogo: isCartCheckout ? effectiveItem.title : `${qty}x ${item.title}`,
+          appId: isCartCheckout ? cartItems?.[0]?.appId : (item as any)?.appId,
+          cupom: couponPercent > 0 ? coupon.trim().toUpperCase() : undefined
         })
       });
 
@@ -2625,7 +2629,7 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
 
         if (data && data.status === 'approved') {
           setPaymentStatus('approved');
-          setGameKey(data.chave || gerarKeyAleatoria());
+          setGameKey(data.chave || data.steam_key || data.support_code || data.codigo_suporte || data.code || gerarKeyAleatoria());
           setDone(true);
           onCheckoutSuccess?.();
         } else if (data.status === 'rejected' || data.status === 'cancelled') {
@@ -3101,6 +3105,11 @@ interface Compra {
   valor: number;
   status: string;
   chave?: string | null;
+  steam_key?: string | null;
+  support_code?: string | null;
+  codigo_suporte?: string | null;
+  mensagem_entrega?: string | null;
+  delivery_type?: string | null;
   data: string;
 }
 
@@ -3152,17 +3161,41 @@ function MyPurchasesModal({ token, onClose }: { token: string; onClose: () => vo
         {!loading && !error && compras.length > 0 && (
           <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
             {compras.slice().reverse().map(c => (
-              <div key={c.id} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, padding:'16px 18px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
-                <div>
-                  <p style={{ color:C.textLight, fontWeight:700, fontSize:15, marginBottom:4 }}>{c.titulo_jogo}</p>
-                  <p style={{ color:C.textMuted, fontSize:12 }}>{new Date(c.data).toLocaleString('pt-BR')}</p>
+              <div key={c.id} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, padding:'16px 18px', display:'flex', flexDirection:'column', gap:10 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
+                  <div>
+                    <p style={{ color:C.textLight, fontWeight:700, fontSize:15, marginBottom:4 }}>{c.titulo_jogo}</p>
+                    <p style={{ color:C.textMuted, fontSize:12 }}>{new Date(c.data).toLocaleString('pt-BR')}</p>
+                  </div>
+                  <div style={{ textAlign:'right' }}>
+                    <p style={{ color:C.secondary, fontWeight:800, fontSize:15 }}>
+                      {Number(c.valor).toLocaleString('pt-BR', { style:'currency', currency:'BRL' })}
+                    </p>
+                    <span style={{ fontSize:11, fontWeight:700, color:C.green, textTransform:'uppercase' }}>Aprovado</span>
+                  </div>
                 </div>
-                <div style={{ textAlign:'right' }}>
-                  <p style={{ color:C.secondary, fontWeight:800, fontSize:15 }}>
-                    {Number(c.valor).toLocaleString('pt-BR', { style:'currency', currency:'BRL' })}
-                  </p>
-                  <span style={{ fontSize:11, fontWeight:700, color:C.green, textTransform:'uppercase' }}>Aprovado</span>
-                </div>
+                {(() => {
+                  const codigo = c.chave || c.steam_key || c.support_code || c.codigo_suporte;
+                  const isTicket = c.delivery_type === 'manual_ticket';
+                  if (!codigo) return null;
+                  return (
+                    <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:9, padding:'10px 14px' }}>
+                      <p style={{ color:C.textMuted, fontSize:11, marginBottom:6 }}>
+                        {isTicket ? '🎫 Código de resgate — abra um ticket no Discord' : '🔑 Chave de ativação'}
+                      </p>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }}>
+                        <span style={{ fontFamily:'monospace', fontSize:13, fontWeight:700, color:C.accent, letterSpacing:'1px', wordBreak:'break-all' }}>{codigo}</span>
+                        <button onClick={() => navigator.clipboard.writeText(codigo)}
+                          style={{ background:C.primary, border:'none', color:'white', borderRadius:6, padding:'5px 12px', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0 }}>
+                          Copiar
+                        </button>
+                      </div>
+                      {isTicket && c.mensagem_entrega && (
+                        <p style={{ color:C.textMuted, fontSize:11, marginTop:6 }}>{c.mensagem_entrega}</p>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>
@@ -3548,6 +3581,10 @@ interface AdminSale {
   metodo: string;
   status: string;
   chave?: string | null;
+  steam_key?: string | null;
+  support_code?: string | null;
+  support_code_status?: string | null;
+  delivery_type?: string | null;
   data: string;
 }
 
@@ -3566,6 +3603,7 @@ interface AdminCoupon {
   codigo: string;
   percentual: number;
   produtosAplicaveis: number[];
+  validoParaTodos: boolean;
   validoAte: string | null;
   usosMaximos: number | null;
   usosAtuais: number;
@@ -3898,10 +3936,9 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
                           <span style={{ color:C.secondary, background:'rgba(123,47,190,0.12)', padding:'3px 9px', borderRadius:8, fontSize:11, fontWeight:700, textTransform:'uppercase' }}>{s.metodo}</span>
                         </td>
                         <td style={{ padding:'12px 16px' }}>
-                          {s.chave
-                            ? <span style={{ fontFamily:'monospace', fontSize:12, color:C.accent, background:'rgba(123,47,190,0.12)', padding:'4px 10px', borderRadius:6, letterSpacing:'1px' }}>{s.chave}</span>
-                            : <span style={{ color:C.textMuted, fontSize:12 }}>—</span>
-                          }
+                          {(() => { const k = s.chave || s.steam_key || s.support_code; return k
+                            ? <span style={{ fontFamily:'monospace', fontSize:12, color:C.accent, background:'rgba(123,47,190,0.12)', padding:'4px 10px', borderRadius:6, letterSpacing:'1px', wordBreak:'break-all' }}>{k}</span>
+                            : <span style={{ color:C.textMuted, fontSize:12 }}>—</span>; })()}
                         </td>
                         <td style={{ padding:'12px 16px', color:C.textMuted, fontSize:12 }}>{new Date(s.data).toLocaleString('pt-BR')}</td>
                       </tr>
