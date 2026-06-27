@@ -3587,6 +3587,11 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [massaPriceModal, setMassaPriceModal] = useState(false);
+  const [massaValor, setMassaValor] = useState('');
+  const [massaModo, setMassaModo] = useState<'fixo'|'percentual'>('fixo');
+  const [massaLoading, setMassaLoading] = useState(false);
+  const [massaMsg, setMassaMsg] = useState('');
 
   const [editingCoupon, setEditingCoupon] = useState<AdminCoupon | null>(null);
   const [creatingCoupon, setCreatingCoupon] = useState(false);
