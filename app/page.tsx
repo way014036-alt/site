@@ -2317,6 +2317,7 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
   const [copied, setCopied] = useState(false);
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
+  const [couponPercent, setCouponPercent] = useState(0);
   const [name, setName] = useState(accountName);
   const [email, setEmail] = useState(accountEmail);
   const [terms, setTerms] = useState(false);
@@ -2569,11 +2570,12 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
       });
       const data = await res.json();
       if (!res.ok) {
+        setCouponPercent(0);
         setDiscount(0);
         setCouponMsg(data.erro || 'Cupom inválido.');
       } else {
-        const desc = subtotal * (data.percentual / 100);
-        setDiscount(desc);
+        setCouponPercent(data.percentual);
+        setDiscount(subtotal * (data.percentual / 100));
         setCouponMsg(`✓ Cupom aplicado! -${data.percentual}% de desconto`);
       }
     } catch {
@@ -2588,6 +2590,13 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
     setPaymentId(null);
     setPaymentStatus('idle');
   }, [qty, discount]);
+
+  // Recalcula o desconto sempre que o subtotal mudar (ex: item removido do carrinho)
+  useEffect(() => {
+    if (couponPercent > 0) {
+      setDiscount(subtotal * (couponPercent / 100));
+    }
+  }, [subtotal, couponPercent]);
 
   // VERIFICADOR DE PAGAMENTO: consulta o status a cada 4s enquanto estiver pendente.
   // Quando aprovar, avança automaticamente para a tela de confirmação.
