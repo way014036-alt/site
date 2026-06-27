@@ -2124,7 +2124,7 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
               )}
               
               <a 
-                href="https://discord.gg/zPnKfF7JmK" 
+                href="https://discord.gg/ZqZSYv32xY" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 style={{ width: '100%', padding: '14px', backgroundColor: '#5865F2', border: 'none', borderRadius: '10px', color: '#FFF', fontWeight: 600, fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', boxShadow: '0 4px 12px rgba(88, 101, 242, 0.2)' }}
@@ -3146,7 +3146,7 @@ function Footer() {
         <div>
           <h4 style={{ color:C.textLight, fontWeight:700, marginBottom:14 }}>Comunidade</h4>
           <div style={{ display:'flex', gap:10 }}>
-            <a href="https://discord.gg/neplimstore" target="_blank" rel="noopener noreferrer"
+            <a href="https://discord.gg/ZqZSYv32xY" target="_blank" rel="noopener noreferrer"
               style={{ width:42, height:42, borderRadius:10, background:'#5865F2', display:'flex', alignItems:'center', justifyContent:'center', textDecoration:'none' }}>
               <svg width="20" height="16" viewBox="0 0 71 55" fill="white"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.8.6a.2.2 0 0 0-.2.1c-.6 1.2-1.3 2.7-1.8 3.9a54.1 54.1 0 0 0-16.3 0 41 41 0 0 0-1.8-3.9.2.2 0 0 0-.2-.1A58.4 58.4 0 0 0 11 4.9a.2.2 0 0 0-.1.1C1.6 18.7-.9 32.2.3 45.5a.2.2 0 0 0 .1.1 58.8 58.8 0 0 0 17.7 9 .2.2 0 0 0 .2-.1 42.2 42.2 0 0 0 3.6-5.9.2.2 0 0 0-.1-.3 38.7 38.7 0 0 1-5.5-2.6.2.2 0 0 1 0-.4c.4-.3.7-.6 1.1-.9a.2.2 0 0 1 .2 0c11.5 5.3 24 5.3 35.3 0a.2.2 0 0 1 .2 0c.4.3.7.6 1.1.9a.2.2 0 0 1 0 .4 36 36 0 0 1-5.5 2.6.2.2 0 0 0-.1.3 47.4 47.4 0 0 0 3.6 5.9.2.2 0 0 0 .2 .1 58.7 58.7 0 0 0 17.8-9 .2.2 0 0 0 .1-.1c1.5-15.4-2.5-28.8-10.7-40.6a.2.2 0 0 0-.1-.1ZM23.7 37.3c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.5 3.3 6.4 7.2 0 4-2.8 7.2-6.4 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.5 3.3 6.4 7.2 0 4-2.8 7.2-6.4 7.2Z"/></svg>
             </a>
