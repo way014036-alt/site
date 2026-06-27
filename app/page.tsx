@@ -3683,6 +3683,29 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
     return () => { document.body.style.overflow = 'unset'; };
   }, []);
 
+  const handleMassaPrice = async () => {
+    const v = parseFloat(massaValor.replace(',', '.'));
+    if (isNaN(v) || massaValor.trim() === '') { setMassaMsg('Informe um valor válido.'); return; }
+    if (massaModo === 'fixo' && v < 0) { setMassaMsg('O preço não pode ser negativo.'); return; }
+    if (!confirm(`Aplicar ${massaModo === 'fixo' ? `preço fixo R$ ${v.toFixed(2).replace('.',',')}` : `ajuste de ${v > 0 ? '+' : ''}${v}%`} em TODOS os jogos?`)) return;
+    setMassaLoading(true); setMassaMsg('');
+    try {
+      const res = await fetch(`${API_BASE}/admin/produtos/ajuste-em-massa`, {
+        method: 'POST', headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modo: massaModo, valor: v })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erro || 'Erro ao ajustar preços.');
+      setMassaMsg(`✓ ${data.mensagem}`);
+      await loadProdutos();
+      setTimeout(() => { setMassaPriceModal(false); setMassaValor(''); setMassaMsg(''); }, 1500);
+    } catch (e: any) {
+      setMassaMsg(e.message || 'Erro ao ajustar preços.');
+    } finally {
+      setMassaLoading(false);
+    }
+  };
+
   const handleDeleteProduct = async (id: number) => {
     setDeletingId(id);
     try {
@@ -3894,12 +3917,61 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
                 onFocus={e=>(e.target.style.borderColor=C.secondary)}
                 onBlur={e=>(e.target.style.borderColor=C.border)}
               />
+              <button onClick={() => { setMassaPriceModal(true); setMassaMsg(''); setMassaValor(''); }}
+                style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 20px', borderRadius:10, background:'rgba(123,47,190,0.15)', border:`1px solid rgba(123,47,190,0.35)`, color:C.secondary, fontWeight:700, fontSize:14, cursor:'pointer', transition:'opacity 0.15s, transform 0.15s' }}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)'}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(0)'}}>
+                💰 Preço em massa
+              </button>
               <button onClick={() => setCreatingProduct(true)}
                 style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 20px', borderRadius:10, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:`0 4px 14px rgba(123,47,190,0.4)`, transition:'opacity 0.15s, transform 0.15s' }}
                 onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)'}}
                 onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(0)'}}>
                 <Plus size={16} /> Novo produto
               </button>
+
+              {/* Modal de Preço em Massa */}
+              {massaPriceModal && (
+                <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}
+                  onClick={e => { if (e.target === e.currentTarget) setMassaPriceModal(false); }}>
+                  <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:16, padding:28, width:'100%', maxWidth:400 }}>
+                    <h3 style={{ color:C.textLight, fontWeight:800, fontSize:17, marginBottom:4 }}>💰 Aplicar preço em todos os jogos</h3>
+                    <p style={{ color:C.textMuted, fontSize:12, marginBottom:20 }}>Isso vai atualizar o preço de <b style={{color:C.secondary}}>todos os produtos</b> de uma vez.</p>
+
+                    <label style={{ color:C.textMuted, fontSize:12, fontWeight:600, display:'block', marginBottom:6 }}>Modo</label>
+                    <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                      {(['fixo','percentual'] as const).map(m => (
+                        <button key={m} onClick={() => setMassaModo(m)}
+                          style={{ flex:1, padding:'9px 0', borderRadius:9, border:`1px solid ${massaModo===m ? C.secondary : C.border}`, background: massaModo===m ? 'rgba(123,47,190,0.18)' : C.surface, color: massaModo===m ? C.secondary : C.textMuted, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                          {m === 'fixo' ? '💵 Preço fixo' : '📊 Percentual'}
+                        </button>
+                      ))}
+                    </div>
+
+                    <label style={{ color:C.textMuted, fontSize:12, fontWeight:600, display:'block', marginBottom:6 }}>
+                      {massaModo === 'fixo' ? 'Novo preço (R$)' : 'Ajuste (ex: -10 para -10%, +20 para +20%)'}
+                    </label>
+                    <input value={massaValor} onChange={e => { setMassaValor(e.target.value); setMassaMsg(''); }}
+                      placeholder={massaModo === 'fixo' ? 'Ex: 49,90' : 'Ex: -10'}
+                      style={{ width:'100%', boxSizing:'border-box', background:C.surface, border:`1px solid ${C.border}`, borderRadius:9, padding:'10px 14px', color:C.text, fontSize:14, outline:'none', marginBottom:16 }} />
+
+                    {massaMsg && (
+                      <p style={{ fontSize:12, marginBottom:12, color: massaMsg.startsWith('✓') ? '#4caf6e' : '#FF6B6B' }}>{massaMsg}</p>
+                    )}
+
+                    <div style={{ display:'flex', gap:10 }}>
+                      <button onClick={() => setMassaPriceModal(false)}
+                        style={{ flex:1, padding:'11px 0', borderRadius:9, background:C.surface, border:`1px solid ${C.border}`, color:C.textMuted, fontWeight:700, fontSize:14, cursor:'pointer' }}>
+                        Cancelar
+                      </button>
+                      <button onClick={handleMassaPrice} disabled={massaLoading}
+                        style={{ flex:2, padding:'11px 0', borderRadius:9, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor: massaLoading ? 'not-allowed' : 'pointer', opacity: massaLoading ? 0.7 : 1 }}>
+                        {massaLoading ? 'Aplicando...' : 'Aplicar em todos'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div style={{ overflowX:'auto', borderRadius:12, border:`1px solid ${C.border}` }}>
