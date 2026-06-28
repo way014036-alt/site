@@ -98,7 +98,7 @@ const FEATURED: FeaturedGame[] = [
 const CATEGORIES = ['Todos','Ação','RPG','FPS','Aventura','Estratégia','Indie','Simulação','Terror','Esportes'];
 
 const ACCOUNTS: AccountProduct[] = [
-  { id:1, title:'Conta Fortnite', subtitle:'Skins Raras + V-Bucks', price:'R$ 24,99'', color:'#00D4FF', gradient:'linear-gradient(135deg,#001F6B,#003A99)' },
+  { id:1, title:'Conta Fortnite', subtitle:'Skins Raras + V-Bucks', price:'R$ 24,99', color:'#00D4FF', gradient:'linear-gradient(135deg,#001F6B,#003A99)' },
   { id:2, title:'Conta Valorant', subtitle:'Agentes + Skins Exclusivas', price:'R$ 24,99', color:'#FF4655', gradient:'linear-gradient(135deg,#2D0008,#5C0018)' },
   { id:3, title:'Xbox Game Pass', subtitle:'+100 Jogos por 1 Mês', price:'R$ 24,99', color:'#00CC00', gradient:'linear-gradient(135deg,#001A00,#004400)' },
   { id:4, title:'Crunchyroll Premium', subtitle:'Anime HD Sem Anúncios', price:'R$ 24,99', color:'#F78C1E', gradient:'linear-gradient(135deg,#1A0A00,#3D1E00)' },
