@@ -87,12 +87,12 @@ interface AccountProduct {
 
 // ── Data: Featured Games ───────────────────────────────────
 const FEATURED: FeaturedGame[] = [
-  { id:1, appId:3764200, title:'Resident Evil Requiem', youtubeId:'RJ7eRQgJBbo', price:'R$ 34,00', badge:'Terror Absoluto', description:'O próximo e aterrorizante capítulo da icônica franquia de survival horror.', cover:'https://i.ytimg.com/vi/RJ7eRQgJBbo/maxresdefault.jpg' },
-  { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', price:'R$ 27,99', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
-  { id:3, appId:1174180, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', price:'R$ 25,00', badge:'Premiado', description:'cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
-  { id:4, appId:1203220, title:'Pragmata', youtubeId:'oncaa_fMsyw', price:'R$ 7,99', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
-  { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', price:'R$ 4,99', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
-  { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', price:'R$ 34,00', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
+  { id:1, appId:3764200, title:'Resident Evil Requiem', youtubeId:'RJ7eRQgJBbo', price:'R$ 24,99', badge:'Terror Absoluto', description:'O próximo e aterrorizante capítulo da icônica franquia de survival horror.', cover:'https://i.ytimg.com/vi/RJ7eRQgJBbo/maxresdefault.jpg' },
+  { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', price:'R$ 24,99', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
+  { id:3, appId:1174180, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', price:'R$ 24,99', badge:'Premiado', description:'cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
+  { id:4, appId:1203220, title:'Pragmata', youtubeId:'oncaa_fMsyw', price:'R$ 24,99', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
+  { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', price:'R$ 24,99', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
+  { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', price:'R$ 24,99', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
 ];
 
 const CATEGORIES = ['Todos','Ação','RPG','FPS','Aventura','Estratégia','Indie','Simulação','Terror','Esportes'];
