@@ -87,29 +87,29 @@ interface AccountProduct {
 
 // ── Data: Featured Games ───────────────────────────────────
 const FEATURED: FeaturedGame[] = [
-  { id:1, appId:3764200, title:'Resident Evil Requiem', youtubeId:'RJ7eRQgJBbo', price: 'R$ 24,99', badge:'Terror Absoluto', description:'O próximo e aterrorizante capítulo da icônica franquia de survival horror.', cover:'https://i.ytimg.com/vi/RJ7eRQgJBbo/maxresdefault.jpg' },
-  { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', price: 'R$ 24,99', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
-  { id:3, appId:1174180, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', price: 'R$ 24,99', badge:'Premiado', description:'cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
-  { id:4, appId:3357650, title:'Pragmata', youtubeId:'oncaa_fMsyw', price: 'R$ 24,99', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://cdn.cloudflare.steamstatic.com/steam/apps/3357650/library_600x900.jpg' },
-  { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', price: 'R$ 24,99', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
-  { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', price: 'R$ 24,99', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
+  { id:1, appId:3764200, title:'Resident Evil Requiem', youtubeId:'RJ7eRQgJBbo', price:'R$ 34,00', badge:'Terror Absoluto', description:'O próximo e aterrorizante capítulo da icônica franquia de survival horror.', cover:'https://i.ytimg.com/vi/RJ7eRQgJBbo/maxresdefault.jpg' },
+  { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', price:'R$ 27,99', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
+  { id:3, appId:1174180, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', price:'R$ 25,00', badge:'Premiado', description:'cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
+  { id:4, appId:1203220, title:'Pragmata', youtubeId:'oncaa_fMsyw', price:'R$ 7,99', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
+  { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', price:'R$ 4,99', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
+  { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', price:'R$ 34,00', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
 ];
 
 const CATEGORIES = ['Todos','Ação','RPG','FPS','Aventura','Estratégia','Indie','Simulação','Terror','Esportes'];
 
 const ACCOUNTS: AccountProduct[] = [
-  { id:1, title:'Conta Fortnite', subtitle:'Skins Raras + V-Bucks', price: 'R$ 24,99', color:'#00D4FF', gradient:'linear-gradient(135deg,#001F6B,#003A99)' },
-  { id:2, title:'Conta Valorant', subtitle:'Agentes + Skins Exclusivas', price: 'R$ 24,99', color:'#FF4655', gradient:'linear-gradient(135deg,#2D0008,#5C0018)' },
-  { id:3, title:'Xbox Game Pass', subtitle:'+100 Jogos por 1 Mês', price: 'R$ 24,99', color:'#00CC00', gradient:'linear-gradient(135deg,#001A00,#004400)' },
-  { id:4, title:'Crunchyroll Premium', subtitle:'Anime HD Sem Anúncios', price: 'R$ 24,99', color:'#F78C1E', gradient:'linear-gradient(135deg,#1A0A00,#3D1E00)' },
-  { id:5, title:'Netflix Premium 4K', subtitle:'Tela Extra por 30 Dias', price: 'R$ 24,99', color:'#E50914', gradient:'linear-gradient(135deg,#1F0000,#4A0005)' },
-  { id:6, title:'Spotify Premium', subtitle:'Música Ilimitada 1 Mês', price: 'R$ 24,99', color:'#1DB954', gradient:'linear-gradient(135deg,#001A08,#003D13)' },
-  { id:7, title:'Robux 1200', subtitle:'Para Usar no Roblox', price: 'R$ 24,99', color:'#00B2FF', gradient:'linear-gradient(135deg,#001A2E,#003D6B)' },
-  { id:8, title:'Pack de IA Premium', subtitle:'ChatGPT Plus + Midjourney', price: 'R$ 24,99', color:'#A855F7', gradient:'linear-gradient(135deg,#1A0035,#3D006B)' },
+  { id:1, title:'Conta Fortnite', subtitle:'Skins Raras + V-Bucks', price:'R$ 24,99'', color:'#00D4FF', gradient:'linear-gradient(135deg,#001F6B,#003A99)' },
+  { id:2, title:'Conta Valorant', subtitle:'Agentes + Skins Exclusivas', price:'R$ 24,99', color:'#FF4655', gradient:'linear-gradient(135deg,#2D0008,#5C0018)' },
+  { id:3, title:'Xbox Game Pass', subtitle:'+100 Jogos por 1 Mês', price:'R$ 24,99', color:'#00CC00', gradient:'linear-gradient(135deg,#001A00,#004400)' },
+  { id:4, title:'Crunchyroll Premium', subtitle:'Anime HD Sem Anúncios', price:'R$ 24,99', color:'#F78C1E', gradient:'linear-gradient(135deg,#1A0A00,#3D1E00)' },
+  { id:5, title:'Netflix Premium 4K', subtitle:'Tela Extra por 30 Dias', price:'R$ 24,99', color:'#E50914', gradient:'linear-gradient(135deg,#1F0000,#4A0005)' },
+  { id:6, title:'Spotify Premium', subtitle:'Música Ilimitada 1 Mês', price:'R$ 24,99', color:'#1DB954', gradient:'linear-gradient(135deg,#001A08,#003D13)' },
+  { id:7, title:'Robux 1200', subtitle:'Para Usar no Roblox', price:'R$ 24,99', color:'#00B2FF', gradient:'linear-gradient(135deg,#001A2E,#003D6B)' },
+  { id:8, title:'Pack de IA Premium', subtitle:'ChatGPT Plus + Midjourney', price:'R$ 24,99', color:'#A855F7', gradient:'linear-gradient(135deg,#1A0035,#3D006B)' },
 ];
 
 const GAMES: Game[] = [
-  { id:7, appId:990080, title:'Hogwarts Legacy', price: 'R$ 24,99', category:'RPG', reviewScore:'Muito Positivo', players:'Single-player', description:'RPG de ação em mundo aberto no universo de Harry Potter.', developer:'Avalanche Software', publisher:'Warner Bros. Games', releaseDate:'10 Fev 2023', genres:['RPG','Ação','Mundo Aberto'], minReq:{ os:'Windows 10 64-bit', cpu:'Intel Core i5-6600 / AMD Ryzen 5 1400', ram:'16 GB RAM', gpu:'NVIDIA GTX 960 4GB / AMD RX 470 4GB', storage:'85 GB SSD', directX:'DirectX 12' }, recReq:{ os:'Windows 10 64-bit', cpu:'Intel Core i7-8700 / AMD Ryzen 5 3600', ram:'16 GB RAM', gpu:'NVIDIA RTX 2080Ti / AMD RX 6800 XT', storage:'85 GB SSD NVMe', directX:'DirectX 12' } },
+  { id:7, appId:990080, title:'Hogwarts Legacy', price:'R$ 24,99', category:'RPG', reviewScore:'Muito Positivo', players:'Single-player', description:'RPG de ação em mundo aberto no universo de Harry Potter.', developer:'Avalanche Software', publisher:'Warner Bros. Games', releaseDate:'10 Fev 2023', genres:['RPG','Ação','Mundo Aberto'], minReq:{ os:'Windows 10 64-bit', cpu:'Intel Core i5-6600 / AMD Ryzen 5 1400', ram:'16 GB RAM', gpu:'NVIDIA GTX 960 4GB / AMD RX 470 4GB', storage:'85 GB SSD', directX:'DirectX 12' }, recReq:{ os:'Windows 10 64-bit', cpu:'Intel Core i7-8700 / AMD Ryzen 5 3600', ram:'16 GB RAM', gpu:'NVIDIA RTX 2080Ti / AMD RX 6800 XT', storage:'85 GB SSD NVMe', directX:'DirectX 12' } },
 
 ];
 
@@ -568,7 +568,7 @@ const GAME_SEEDS: GameSeed[] = [
   [986130,"Shadows of Doubt",false],
   [1592280,"Selaco",false],
   [410830,"Lego Batman",false],
-  [3357650,"Pragmata",false],
+  [1203220,"Pragmata",false],
   [2929460,"007 First Light",false],
 ];
 
@@ -1061,17 +1061,11 @@ function expandSeed(seed: GameSeed, baseId: number): Game {
     'Ys IX': ['R$ 24,99', null],
   };
 
-  const [basePrice, dlcPrice] = PRICE_MAP[title] ?? [
-    'R$ 24,99',
-    hasDLC ? 'R$ 24,99' : null
-  ];
+  const [basePrice] = PRICE_MAP[title] ?? ['R$ 24,99', null];
 
-  const variants: GameVariant[] | undefined = (hasDLC && dlcPrice)
-    ? [
-        { label: 'Edição Base', price: basePrice, stock: 5 + (appId % 8) },
-        { label: 'Edição Completa (Base + DLCs)', price: dlcPrice, stock: 2 + (appId % 5) }
-      ]
-    : undefined;
+  const variants: GameVariant[] = [
+    { label: 'Jogo Base + DLC', price: 'R$ 24,99', stock: 5 + (appId % 8) }
+  ];
 
   return {
     id: baseId,
@@ -1144,105 +1138,36 @@ function useGlobalStyles() {
       body { background:#000000; color:${C.text}; font-family:'Segoe UI',system-ui,sans-serif; overflow-x:hidden; }
       ::-webkit-scrollbar { width:6px; }
       ::-webkit-scrollbar-track { background:#050505; }
-      ::-webkit-scrollbar-thumb { background:linear-gradient(180deg,${C.primary},${C.secondary}); border-radius:3px; }
-      ::-webkit-scrollbar-thumb:hover { background:${C.secondary}; }
+      ::-webkit-scrollbar-thumb { background:${C.primary}; border-radius:3px; }
       input, button, textarea, select { font-family:inherit; }
       img { display:block; }
-
-      /* ── GAME CARDS ── */
-      .game-card { transition:transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s ease; cursor:pointer; position:relative; }
-      .game-card::before { content:''; position:absolute; inset:0; border-radius:14px; background:linear-gradient(135deg,rgba(123,47,190,0.15),transparent); opacity:0; transition:opacity 0.3s; z-index:1; pointer-events:none; }
-      .game-card:hover { transform:translateY(-10px) scale(1.03); box-shadow:0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(123,47,190,0.6), 0 0 80px rgba(123,47,190,0.25), inset 0 0 0 1px rgba(199,125,255,0.3); }
-      .game-card:hover::before { opacity:1; }
-      .game-card:hover .card-img { filter:brightness(1.12) saturate(1.2); transform:scale(1.04); }
-      .card-img { transition:filter 0.3s ease, transform 0.3s ease; }
-
-      /* ── BUTTONS ── */
-      .btn-glow { transition:background 0.2s, box-shadow 0.3s, transform 0.15s; position:relative; overflow:hidden; }
-      .btn-glow::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent); opacity:0; transition:opacity 0.2s; }
-      .btn-glow:hover { box-shadow:0 0 35px rgba(123,47,190,0.9), 0 0 70px rgba(123,47,190,0.45) !important; transform:translateY(-2px); }
-      .btn-glow:hover::after { opacity:1; }
-      .btn-glow:active { transform:scale(0.96) translateY(0); }
-
-      /* ── NAVIGATION ── */
-      .nav-link { position:relative; transition:color 0.2s; }
-      .nav-link::after { content:''; position:absolute; bottom:-4px; left:0; width:0; height:2px; background:linear-gradient(90deg,${C.primary},${C.secondary}); transition:width 0.3s ease; border-radius:2px; }
+      .game-card { transition:transform 0.25s ease, box-shadow 0.25s ease; cursor:pointer; }
+      .game-card:hover { transform:translateY(-6px) scale(1.02); box-shadow:0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(123,47,190,0.5), 0 0 60px rgba(123,47,190,0.2); }
+      .game-card:hover .card-img { filter:brightness(1.08) saturate(1.15); }
+      .card-img { transition:filter 0.25s ease; }
+      .btn-glow { transition:background 0.2s, box-shadow 0.2s, transform 0.1s; }
+      .btn-glow:hover { background:${C.primaryHover} !important; box-shadow:0 0 30px rgba(123,47,190,0.8), 0 0 60px rgba(123,47,190,0.4) !important; }
+      .btn-glow:active { transform:scale(0.97); }
+      .acc-card { transition:transform 0.2s ease, border-color 0.2s ease; cursor:pointer; }
+      .acc-card:hover { transform:translateY(-5px); border-color:rgba(199,125,255,0.55) !important; }
+      .cat-pill { transition:all 0.2s; cursor:pointer; }
+      .cat-pill:hover { border-color:${C.primary} !important; color:white !important; }
+      .thumb:hover { opacity:1 !important; border-color:${C.secondary} !important; }
       .nav-link:hover { color:${C.secondary} !important; }
-      .nav-link:hover::after { width:100%; }
-
-      /* ── CATEGORY PILLS ── */
-      .cat-pill { transition:all 0.25s cubic-bezier(.34,1.56,.64,1); cursor:pointer; }
-      .cat-pill:hover { border-color:${C.primary} !important; color:white !important; transform:translateY(-2px) scale(1.05); box-shadow:0 6px 20px rgba(123,47,190,0.4); }
-
-      /* ── ACC CARDS ── */
-      .acc-card { transition:transform 0.3s cubic-bezier(.34,1.56,.64,1), border-color 0.3s ease, box-shadow 0.3s ease; cursor:pointer; }
-      .acc-card:hover { transform:translateY(-7px) scale(1.02); border-color:rgba(199,125,255,0.6) !important; box-shadow:0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(123,47,190,0.3); }
-
-      /* ── MISC ── */
-      .thumb:hover { opacity:1 !important; border-color:${C.secondary} !important; transform:scale(1.05); transition:all 0.2s; }
-      .variant-radio:hover { border-color:rgba(199,125,255,0.7) !important; background:rgba(123,47,190,0.1) !important; transform:scale(1.02); }
-      .buy-btn-main:hover { background:#e8e8e8 !important; transform:translateY(-1px); box-shadow:0 8px 25px rgba(255,255,255,0.15) !important; }
-      .cart-btn:hover { background:rgba(123,47,190,0.2) !important; border-color:rgba(199,125,255,0.6) !important; transform:translateY(-1px); }
-      .adm-btn-edit:hover { color:${C.accent} !important; text-shadow:0 0 10px rgba(199,125,255,0.6); }
-      .adm-btn-del:hover { text-shadow:0 0 10px rgba(255,107,107,0.6); }
-      .adm-row { transition:background 0.2s; }
-      .adm-row:hover { background:rgba(123,47,190,0.07) !important; }
-
-      /* ── KEYFRAMES ── */
       @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-      @keyframes fadeInDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
-      @keyframes gameFadeIn { from{transform:translateY(28px) scale(0.97);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
-      @keyframes slideUp { from{transform:translateY(40px) scale(0.97);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
-      @keyframes slideInLeft { from{transform:translateX(-30px);opacity:0} to{transform:translateX(0);opacity:1} }
-      @keyframes slideInRight { from{transform:translateX(30px);opacity:0} to{transform:translateX(0);opacity:1} }
-      @keyframes heroBg { from{opacity:0;transform:scale(1.1)} to{opacity:1;transform:scale(1.05)} }
-      @keyframes purplePulse { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.05)} }
+      @keyframes gameFadeIn { from{transform:translateY(24px); opacity:0} to{transform:translateY(0); opacity:1} }
+      @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+      @keyframes heroBg { from{opacity:0;transform:scale(1.08)} to{opacity:1;transform:scale(1.05)} }
+      @keyframes purplePulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
       @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-      @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-      @keyframes floatUp { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-      @keyframes glowPulse { 0%,100%{box-shadow:0 0 20px rgba(123,47,190,0.4)} 50%{box-shadow:0 0 50px rgba(123,47,190,0.9),0 0 90px rgba(123,47,190,0.4)} }
-      @keyframes borderGlow { 0%,100%{border-color:rgba(123,47,190,0.3)} 50%{border-color:rgba(199,125,255,0.7)} }
-      @keyframes particleFloat { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-120px) rotate(360deg);opacity:0} }
-      @keyframes ripple { 0%{transform:scale(0);opacity:0.6} 100%{transform:scale(4);opacity:0} }
-      @keyframes adminFadeIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-      @keyframes adminSlideIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
-      @keyframes countUp { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
-      @keyframes neonFlicker { 0%,19%,21%,23%,25%,54%,56%,100%{text-shadow:0 0 10px ${C.secondary},0 0 20px ${C.secondary},0 0 40px ${C.primary}} 20%,24%,55%{text-shadow:none} }
-      @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-      @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
-      @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
-      @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.1)} 28%{transform:scale(1)} 42%{transform:scale(1.08)} 70%{transform:scale(1)} }
-
-      /* ── APPLIED ANIMATIONS ── */
-      .modal-overlay { animation:fadeIn 0.25s ease; }
-      .modal-box { animation:slideUp 0.35s cubic-bezier(.34,1.56,.64,1); }
-      .hero-slide-anim { animation:fadeIn 0.6s ease; }
-      .hero-bg { animation:heroBg 1s ease forwards; }
+      .modal-overlay { animation:fadeIn 0.2s ease; }
+      .modal-box { animation:slideUp 0.3s ease; }
+      .hero-slide-anim { animation:fadeIn 0.5s ease; }
+      .hero-bg { animation:heroBg 0.8s ease forwards; }
       .purple-orb { animation:purplePulse 4s ease-in-out infinite; }
-      .float-badge { animation:floatUp 3s ease-in-out infinite; }
-      .glow-card { animation:glowPulse 3s ease-in-out infinite; }
-      .border-glow { animation:borderGlow 2.5s ease-in-out infinite; }
-      .checkout-modal { animation:slideUp 0.4s cubic-bezier(.34,1.56,.64,1); }
-      .key-reveal { animation:popIn 0.5s cubic-bezier(.34,1.56,.64,1); }
-      .stat-num { animation:countUp 0.6s cubic-bezier(.34,1.56,.64,1) both; }
-      .pop-in { animation:popIn 0.4s cubic-bezier(.34,1.56,.64,1); }
-
-      /* ── SHIMMER SKELETON ── */
-      .shimmer { background:linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.03) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
-
-      /* ── NEON TEXT ── */
-      .neon-text { animation:neonFlicker 5s infinite; }
-
-      /* ── GRADIENT ANIMATED BG ── */
-      .gradient-animated { background:linear-gradient(270deg,${C.primary},${C.secondary},#8b5cf6,${C.primary}); background-size:400% 400%; animation:gradientShift 6s ease infinite; }
-
-      /* ── RIPPLE EFFECT ── */
-      .ripple-btn { position:relative; overflow:hidden; }
-      .ripple-btn::after { content:''; position:absolute; width:20px; height:20px; background:rgba(255,255,255,0.4); border-radius:50%; transform:scale(0); top:50%; left:50%; margin:-10px; animation:ripple 0.6s ease-out; }
-      .ripple-btn:active::after { animation:ripple 0.6s ease-out; }
-
-      /* ── SCROLLBAR CUSTOM ── */
-      * { scrollbar-width:thin; scrollbar-color:${C.primary} #050505; }
+      .variant-radio:hover { border-color:rgba(199,125,255,0.7) !important; background:rgba(123,47,190,0.08) !important; }
+      .buy-btn-main:hover { background:#e8e8e8 !important; }
+      .cart-btn:hover { background:rgba(123,47,190,0.18) !important; border-color:rgba(199,125,255,0.5) !important; }
     `;
     document.head.appendChild(el);
     return () => { document.head.removeChild(el); };
@@ -1756,11 +1681,10 @@ function GamesGrid({ category, search, onGame }: { category: string; search: str
   return (
     <section style={{ maxWidth:1400, margin:'0 auto', padding:'44px 24px 70px', position:'relative' }}>
       <div className="purple-orb" style={{ position:'absolute', top:-80, left:-100, width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(123,47,190,0.18) 0%, transparent 70%)', pointerEvents:'none', zIndex:0 }} />
-      <div className="purple-orb" style={{ position:'absolute', bottom:-100, right:-80, width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(157,78,221,0.14) 0%, transparent 70%)', pointerEvents:'none', zIndex:0, animationDelay:'2s' }} />
 
       <div style={{ position:'relative', zIndex:1 }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:22 }}>
-          <h2 style={{ fontSize:22, fontWeight:800, background:`linear-gradient(90deg,${C.textLight},${C.secondary},${C.textLight})`, backgroundSize:'200% auto', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', animation:'shimmer 3s linear infinite' }}>Jogos Steam</h2>
+          <h2 style={{ fontSize:22, fontWeight:800, color:C.textLight }}>Jogos Steam</h2>
           <span style={{ background:'rgba(123,47,190,0.2)', color:C.secondary, border:`1px solid ${C.border}`, padding:'3px 10px', borderRadius:20, fontSize:12, fontWeight:600 }}>{list.length} jogos</span>
           <span style={{ marginLeft:'auto', color:C.textMuted, fontSize:13 }}>Exibindo {visible.length} de {list.length}</span>
         </div>
@@ -1844,7 +1768,6 @@ function GamesGrid({ category, search, onGame }: { category: string; search: str
    NUUVEM-STYLE PRODUCT PAGE MODAL
 ═══════════════════════════════════════════════════════════ */
 interface PurchaseItem {
-  id?: number;
   title: string;
   price: string;
   originalPrice?: string;
@@ -2029,17 +1952,17 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
     : fallbackCover;
 
   const faqData = [
-    { q: "Como vou receber o jogo?", a: "Após a aprovação do pagamento, um código de resgate é exibido na tela e salvo em 'Minhas Compras'. Basta abrir um ticket na aba COMPRAS do nosso servidor do Discord e enviar o código para receber sua Steam Key." },
+    { q: "Como vou receber o jogo?", a: "Imediatamente após a aprovação do Pix, a sua chave de ativação oficial da Steam é exibida na tela e enviada ao seu e-mail cadastrado." },
     { q: "O jogo é original e vitalício?", a: "Sim, todos os nossos produtos são licenças digitais oficiais adquiridas legalmente, vinculando-se para sempre à sua biblioteca." },
     { q: "Posso pedir reembolso caso desista?", a: "Por se tratar de um produto digital que é revelado instantaneamente, só realizamos trocas se houver algum problemático técnico comprovado na chave antes do uso." },
     { q: "O jogo funciona em qualquer região?", a: "Sim, garantimos ativação global livre de restrições de região (Worldwide Region Free)." }
   ];
 
   const similarProducts = [
-    { title: "Cyberpunk 2077", price: "R$ 24,99", discount: 75, appId: 1091500 },
-    { title: "Elden Ring", price: "R$ 24,99", discount: 60, appId: 1245620 },
-    { title: "The Witcher 3: Wild Hunt", price: "R$ 24,99", discount: 80, appId: 292030 },
-    { title: "Red Dead Redemption 2", price: "R$ 24,99", discount: 67, appId: 1174180 }
+    { title: "Cyberpunk 2077", price: "R$ 24,99", discount: 0, appId: 1091500 },
+    { title: "Elden Ring", price: "R$ 24,99", discount: 0, appId: 1245620 },
+    { title: "The Witcher 3: Wild Hunt", price: "R$ 24,99", discount: 0, appId: 292030 },
+    { title: "Red Dead Redemption 2", price: "R$ 24,99", discount: 0, appId: 1174180 }
   ];
 
   const marqueeFeedbacks = [...FEEDBACKS_DATA, ...FEEDBACKS_DATA];
@@ -2387,7 +2310,6 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
   const [copied, setCopied] = useState(false);
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
-  const [couponPercent, setCouponPercent] = useState(0);
   const [name, setName] = useState(accountName);
   const [email, setEmail] = useState(accountEmail);
   const [terms, setTerms] = useState(false);
@@ -2525,8 +2447,6 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
           valor: total,
           emailUsuario: accountEmail || email,
           tituloJogo: isCartCheckout ? effectiveItem.title : `${qty}x ${item.title}`,
-          appId: isCartCheckout ? cartItems?.[0]?.appId : (item as any)?.appId,
-          cupom: couponPercent > 0 ? coupon.trim().toUpperCase() : undefined,
           cpf: cpfDigits
         })
       });
@@ -2536,7 +2456,7 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
 
       if (data.status === 'approved') {
         setPaymentStatus('approved');
-        setGameKey(data.chave || data.steam_key || data.support_code || data.codigo_suporte || data.code || gerarKeyAleatoria());
+        setGameKey(gerarKeyAleatoria());
         setDone(true);
         onCheckoutSuccess?.();
       } else if (data.status === 'in_process' || data.status === 'pending') {
@@ -2594,9 +2514,7 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
         body: JSON.stringify({
           valor: total,
           emailUsuario: accountEmail || email,
-          tituloJogo: isCartCheckout ? effectiveItem.title : `${qty}x ${item.title}`,
-          appId: isCartCheckout ? cartItems?.[0]?.appId : (item as any)?.appId,
-          cupom: couponPercent > 0 ? coupon.trim().toUpperCase() : undefined
+          tituloJogo: isCartCheckout ? effectiveItem.title : `${qty}x ${item.title}`
         })
       });
 
@@ -2625,38 +2543,11 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const [couponMsg, setCouponMsg] = useState('');
-  const [couponLoading, setCouponLoading] = useState(false);
-
-  const applyCoupon = async () => {
+  const applyCoupon = () => {
     const c = coupon.trim().toUpperCase();
-    if (!c) return;
-    setCouponMsg('');
-    setCouponLoading(true);
-    try {
-      const appId = isCartCheckout
-        ? cartItems?.[0]?.appId
-        : (item as any)?.appId;
-      const res = await fetch(`${API_BASE}/validar-cupom`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo: c, appId })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCouponPercent(0);
-        setDiscount(0);
-        setCouponMsg(data.erro || 'Cupom inválido.');
-      } else {
-        setCouponPercent(data.percentual);
-        setDiscount(subtotal * (data.percentual / 100));
-        setCouponMsg(`✓ Cupom aplicado! -${data.percentual}% de desconto`);
-      }
-    } catch {
-      setCouponMsg('Erro ao validar cupom. Tente novamente.');
-    } finally {
-      setCouponLoading(false);
-    }
+    if (c === 'NEPLIM10') setDiscount(subtotal * 0.1);
+    else if (c === 'DESCONTO5') setDiscount(5);
+    else { setDiscount(0); alert('Cupom inválido.'); }
   };
 
   useEffect(() => {
@@ -2664,13 +2555,6 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
     setPaymentId(null);
     setPaymentStatus('idle');
   }, [qty, discount]);
-
-  // Recalcula o desconto sempre que o subtotal mudar (ex: item removido do carrinho)
-  useEffect(() => {
-    if (couponPercent > 0) {
-      setDiscount(subtotal * (couponPercent / 100));
-    }
-  }, [subtotal, couponPercent]);
 
   // VERIFICADOR DE PAGAMENTO: consulta o status a cada 4s enquanto estiver pendente.
   // Quando aprovar, avança automaticamente para a tela de confirmação.
@@ -2699,8 +2583,9 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
 
         if (data && data.status === 'approved') {
           setPaymentStatus('approved');
-          setGameKey(data.chave || data.steam_key || data.support_code || data.codigo_suporte || data.code || gerarKeyAleatoria());
-          setDone(true);
+          setGameKey(gerarKeyAleatoria());
+          // O restante do seu código original continua aqui para baixo...
+          setDone(true); // avança para a próxima tela automaticamente
           onCheckoutSuccess?.();
         } else if (data.status === 'rejected' || data.status === 'cancelled') {
           setPaymentStatus('rejected');
@@ -2757,80 +2642,39 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
         ))}
       </div>
 
-      {/* Body — Instruções Discord */}
-      <div style={{ maxWidth:560, margin:'0 auto', padding:'32px 20px 60px', boxSizing:'border-box' }}>
-
-        {/* Card principal de sucesso */}
-        <div style={{ background:'linear-gradient(135deg,#1a1a2e,#16213e)', border:`1px solid rgba(123,47,190,0.5)`, borderRadius:20, padding:28, textAlign:'center', marginBottom:16, animation:'popIn 0.4s cubic-bezier(.34,1.56,.64,1)', boxShadow:'0 0 40px rgba(123,47,190,0.25)' }}>
-          <div style={{ width:72, height:72, borderRadius:'50%', background:'rgba(76,175,80,0.15)', border:'2px solid rgba(76,175,80,0.5)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', boxShadow:'0 0 20px rgba(76,175,80,0.3)', animation:'glowPulse 2s ease-in-out infinite' }}>
-            <CheckCircle size={34} color={C.green} />
+      {/* Body — Key gerada */}
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 60px', boxSizing: 'border-box' }}>
+        <div style={{ background:'#1a1a1a', border:`1px solid ${C.primary}`, borderRadius:16, padding:32, textAlign:'center', boxSizing:'border-box', animation:'popIn 0.35s ease' }}>
+          <div style={{ width:68, height:68, borderRadius:'50%', background:'rgba(76,175,80,0.15)', border:'2px solid rgba(76,175,80,0.4)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+            <CheckCircle size={32} color={C.green} />
           </div>
-          <h2 style={{ fontSize:24, fontWeight:900, color:'#fff', marginBottom:6 }}>Compra confirmada! 🎉</h2>
-          <p style={{ color:'#aaa', fontSize:14, lineHeight:1.5 }}>
-            Seu pagamento de <strong style={{ color:C.secondary }}>{effectiveItem.title}</strong> foi aprovado.<br/>
-            Siga o tutorial abaixo para resgatar sua Steam Key.
+          <h2 style={{ fontSize:22, fontWeight:900, color:'#fff', marginBottom:6 }}>Pagamento aprovado!</h2>
+          <p style={{ color:'#888', fontSize:14, marginBottom:24 }}>
+            Sua chave de <strong style={{ color:C.secondary }}>{effectiveItem.title}</strong> já está disponível abaixo.
           </p>
-        </div>
 
-        {/* Código de resgate */}
-        <div className="key-reveal" style={{ background:'rgba(123,47,190,0.1)', border:`1px solid rgba(199,125,255,0.4)`, borderRadius:14, padding:'18px 20px', marginBottom:16, boxShadow:'0 0 25px rgba(123,47,190,0.2)' }}>
-          <p style={{ color:C.textMuted, fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'1px', marginBottom:8 }}>🎫 Seu código de resgate</p>
-          <div style={{ display:'flex', gap:10, alignItems:'center', background:'rgba(0,0,0,0.4)', borderRadius:10, padding:'12px 16px', marginBottom:10 }}>
-            <span style={{ flex:1, fontFamily:'monospace', fontSize:15, fontWeight:800, color:C.accent, letterSpacing:'2px', wordBreak:'break-all' }}>{gameKey}</span>
+          {/* Card da Key — mesmo estilo do bloco do Pix */}
+          <div style={{ background:'#111', border:'1px solid #2a2a2a', borderRadius:10, padding:'16px', marginBottom:16, boxSizing:'border-box' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, color:C.textMuted, fontSize:12, marginBottom:10 }}>
+              <Key size={14} /> Sua Chave de Ativação (Steam Key)
+            </div>
+            <div style={{ display:'flex', gap:8, background:'#0a0a0a', border:`1px solid ${C.border}`, borderRadius:8, padding:'12px 14px', alignItems:'center' }}>
+              <div style={{ flex:1, fontSize:16, fontWeight:700, letterSpacing:'1px', color:C.accent, fontFamily:'monospace', wordBreak:'break-all', textAlign:'left' }}>{gameKey}</div>
+            </div>
+            <button onClick={handleCopyKey} style={{ width:'100%', marginTop:10, background: keyCopied ? C.green : C.primary, border:'none', color:'white', borderRadius:8, padding:'11px', fontSize:14, fontWeight:700, cursor:'pointer' }}>
+              {keyCopied ? 'Copiada!' : 'Copiar chave'}
+            </button>
           </div>
-          <button onClick={handleCopyKey}
-            style={{ width:'100%', padding:'11px', borderRadius:10, background: keyCopied ? C.green : `linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor:'pointer', transition:'all 0.2s', boxShadow: keyCopied ? '0 0 20px rgba(76,175,80,0.5)' : '0 0 20px rgba(123,47,190,0.4)' }}>
-            {keyCopied ? '✓ Copiado!' : '📋 Copiar código'}
+
+          <p style={{ color:'#666', fontSize:12, lineHeight:1.6, marginBottom:24 }}>
+            Guarde essa chave com cuidado. Ela também ficará disponível a qualquer momento em <strong style={{ color:'#999' }}>Minhas Compras</strong>.
+          </p>
+
+          <button onClick={onClose}
+            style={{ width:'100%', padding:'14px', borderRadius:10, background:C.primary, border:'none', color:'white', fontWeight:700, fontSize:15, cursor:'pointer' }}>
+            Voltar para a Loja
           </button>
-          <p style={{ color:'#555', fontSize:11, marginTop:8, textAlign:'center' }}>Este código também estará em <strong style={{ color:'#888' }}>Minhas Compras</strong></p>
         </div>
-
-        {/* Tutorial Discord */}
-        <div style={{ background:'#111', border:'1px solid #1e1e1e', borderRadius:16, padding:'20px', marginBottom:16, animation:'adminFadeIn 0.5s ease 0.2s both' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:'#5865F2', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
-              <svg width="20" height="20" viewBox="0 0 71 55" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.5.7a40 40 0 0 0-1.8 3.6 54 54 0 0 0-16.3 0A40 40 0 0 0 25.6.7 58.3 58.3 0 0 0 11 4.9C1.6 19 -1 32.7.3 46.3a58.9 58.9 0 0 0 17.9 9 42 42 0 0 0 3.7-6 38.3 38.3 0 0 1-5.9-2.8l1.4-1.1a42 42 0 0 0 36.2 0l1.4 1.1a38.5 38.5 0 0 1-5.9 2.8 42 42 0 0 0 3.7 6A58.7 58.7 0 0 0 70.7 46C72.3 30.2 68 16.6 60.1 4.9ZM23.7 37.8c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.3 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Z"/></svg>
-            </div>
-            <div>
-              <p style={{ color:'white', fontWeight:800, fontSize:15, marginBottom:2 }}>Como resgatar sua Steam Key</p>
-              <p style={{ color:'#666', fontSize:12 }}>Siga os passos no nosso servidor do Discord</p>
-            </div>
-          </div>
-
-          {[
-            { step:'1', icon:'🔗', title:'Entre no servidor', desc:'Acesse o servidor oficial da Neplim Store no Discord clicando no botão abaixo.' },
-            { step:'2', icon:'🎫', title:'Abra um ticket', desc:'Vá até a aba COMPRAS e clique em "Abrir Ticket" para criar seu atendimento.' },
-            { step:'3', icon:'📋', title:'Envie seu código', desc:'Cole o código de resgate acima no ticket. Nosso time irá verificar sua compra.' },
-            { step:'4', icon:'🎮', title:'Receba sua Steam Key', desc:'Em instantes você receberá sua Steam Key original para ativar o jogo.' },
-          ].map((s, i) => (
-            <div key={i} style={{ display:'flex', gap:14, alignItems:'flex-start', marginBottom: i < 3 ? 16 : 0, animation:`adminSlideIn 0.4s ease ${0.1 + i*0.1}s both` }}>
-              <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:0 }}>
-                <div style={{ width:32, height:32, borderRadius:'50%', background:`linear-gradient(135deg,${C.primary},${C.secondary})`, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:13, color:'white', boxShadow:`0 0 12px rgba(123,47,190,0.5)` }}>{s.step}</div>
-                {i < 3 && <div style={{ width:2, height:20, background:'rgba(123,47,190,0.3)', marginTop:4 }} />}
-              </div>
-              <div style={{ paddingTop:4 }}>
-                <p style={{ color:'white', fontWeight:700, fontSize:14, marginBottom:3 }}>{s.icon} {s.title}</p>
-                <p style={{ color:'#777', fontSize:12, lineHeight:1.5 }}>{s.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Botão Discord */}
-        <a href="https://discord.gg/ZqZSYv32xY" target="_blank" rel="noopener noreferrer"
-          style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, width:'100%', padding:'14px', borderRadius:12, background:'#5865F2', border:'none', color:'white', fontWeight:700, fontSize:15, cursor:'pointer', textDecoration:'none', marginBottom:10, boxShadow:'0 4px 20px rgba(88,101,242,0.5)', transition:'all 0.2s' }}
-          onMouseEnter={e=>(e.currentTarget as HTMLAnchorElement).style.transform='translateY(-2px)'}
-          onMouseLeave={e=>(e.currentTarget as HTMLAnchorElement).style.transform='translateY(0)'}>
-          <svg width="22" height="22" viewBox="0 0 71 55" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.5.7a40 40 0 0 0-1.8 3.6 54 54 0 0 0-16.3 0A40 40 0 0 0 25.6.7 58.3 58.3 0 0 0 11 4.9C1.6 19 -1 32.7.3 46.3a58.9 58.9 0 0 0 17.9 9 42 42 0 0 0 3.7-6 38.3 38.3 0 0 1-5.9-2.8l1.4-1.1a42 42 0 0 0 36.2 0l1.4 1.1a38.5 38.5 0 0 1-5.9 2.8 42 42 0 0 0 3.7 6A58.7 58.7 0 0 0 70.7 46C72.3 30.2 68 16.6 60.1 4.9ZM23.7 37.8c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.3 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Z"/></svg>
-          Ir para o Discord agora
-        </a>
-
-        <button onClick={onClose}
-          style={{ width:'100%', padding:'12px', borderRadius:12, background:'transparent', border:`1px solid ${C.border}`, color:'#888', fontWeight:600, fontSize:14, cursor:'pointer', transition:'all 0.2s' }}
-          onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=C.secondary;(e.currentTarget as HTMLButtonElement).style.color='white'}}
-          onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=C.border;(e.currentTarget as HTMLButtonElement).style.color='#888'}}>
-          Voltar para a Loja
-        </button>
       </div>
     </div>
   );
@@ -3028,15 +2872,10 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
           )}
 
           {/* Coupon */}
-          <div style={{ display:'flex', gap:8, marginBottom:4 }}>
-            <input value={coupon} onChange={e=>{ setCoupon(e.target.value); setCouponMsg(''); }} placeholder="Digite seu cupom de desconto" style={{ flex:1, minWidth:0, background:'#111', border:'1px solid #2a2a2a', borderRadius:8, padding:'9px 12px', color:'#ccc', fontSize:13, outline:'none' }} />
-            <button onClick={applyCoupon} disabled={couponLoading} style={{ background: couponLoading ? '#333' : '#222', border:'1px solid #333', borderRadius:8, color:'#ccc', fontSize:13, fontWeight:600, padding:'9px 16px', cursor: couponLoading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap', flexShrink:0 }}>
-              {couponLoading ? '...' : 'Aplicar'}
-            </button>
+          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+            <input value={coupon} onChange={e=>setCoupon(e.target.value)} placeholder="Digite seu cupom de desconto" style={{ flex:1, minWidth:0, background:'#111', border:'1px solid #2a2a2a', borderRadius:8, padding:'9px 12px', color:'#ccc', fontSize:13, outline:'none' }} />
+            <button onClick={applyCoupon} style={{ background:'#222', border:'1px solid #333', borderRadius:8, color:'#ccc', fontSize:13, fontWeight:600, padding:'9px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap', flexShrink:0 }}><CreditCard size={13} /> Aplicar</button>
           </div>
-          {couponMsg && (
-            <p style={{ fontSize:12, marginBottom:12, color: discount > 0 ? '#4caf6e' : '#FF6B6B' }}>{couponMsg}</p>
-          )}
 
           <div style={{ height:1, background:'#2a2a2a', margin:'4px 0 12px' }} />
           <div style={{ display:'flex', justifyContent:'space-between', fontSize:14, color:'#aaa', marginBottom:6 }}><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
@@ -3187,7 +3026,7 @@ function Footer() {
         <div>
           <h4 style={{ color:C.textLight, fontWeight:700, marginBottom:14 }}>Comunidade</h4>
           <div style={{ display:'flex', gap:10 }}>
-            <a href="https://discord.gg/ZqZSYv32xYstore" target="_blank" rel="noopener noreferrer"
+            <a href="https://discord.gg/neplimstore" target="_blank" rel="noopener noreferrer"
               style={{ width:42, height:42, borderRadius:10, background:'#5865F2', display:'flex', alignItems:'center', justifyContent:'center', textDecoration:'none' }}>
               <svg width="20" height="16" viewBox="0 0 71 55" fill="white"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.8.6a.2.2 0 0 0-.2.1c-.6 1.2-1.3 2.7-1.8 3.9a54.1 54.1 0 0 0-16.3 0 41 41 0 0 0-1.8-3.9.2.2 0 0 0-.2-.1A58.4 58.4 0 0 0 11 4.9a.2.2 0 0 0-.1.1C1.6 18.7-.9 32.2.3 45.5a.2.2 0 0 0 .1.1 58.8 58.8 0 0 0 17.7 9 .2.2 0 0 0 .2-.1 42.2 42.2 0 0 0 3.6-5.9.2.2 0 0 0-.1-.3 38.7 38.7 0 0 1-5.5-2.6.2.2 0 0 1 0-.4c.4-.3.7-.6 1.1-.9a.2.2 0 0 1 .2 0c11.5 5.3 24 5.3 35.3 0a.2.2 0 0 1 .2 0c.4.3.7.6 1.1.9a.2.2 0 0 1 0 .4 36 36 0 0 1-5.5 2.6.2.2 0 0 0-.1.3 47.4 47.4 0 0 0 3.6 5.9.2.2 0 0 0 .2 .1 58.7 58.7 0 0 0 17.8-9 .2.2 0 0 0 .1-.1c1.5-15.4-2.5-28.8-10.7-40.6a.2.2 0 0 0-.1-.1ZM23.7 37.3c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.5 3.3 6.4 7.2 0 4-2.8 7.2-6.4 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.5 3.3 6.4 7.2 0 4-2.8 7.2-6.4 7.2Z"/></svg>
             </a>
@@ -3215,12 +3054,6 @@ interface Compra {
   titulo_jogo: string;
   valor: number;
   status: string;
-  chave?: string | null;
-  steam_key?: string | null;
-  support_code?: string | null;
-  codigo_suporte?: string | null;
-  mensagem_entrega?: string | null;
-  delivery_type?: string | null;
   data: string;
 }
 
@@ -3272,41 +3105,17 @@ function MyPurchasesModal({ token, onClose }: { token: string; onClose: () => vo
         {!loading && !error && compras.length > 0 && (
           <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
             {compras.slice().reverse().map(c => (
-              <div key={c.id} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, padding:'16px 18px', display:'flex', flexDirection:'column', gap:10 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
-                  <div>
-                    <p style={{ color:C.textLight, fontWeight:700, fontSize:15, marginBottom:4 }}>{c.titulo_jogo}</p>
-                    <p style={{ color:C.textMuted, fontSize:12 }}>{new Date(c.data).toLocaleString('pt-BR')}</p>
-                  </div>
-                  <div style={{ textAlign:'right' }}>
-                    <p style={{ color:C.secondary, fontWeight:800, fontSize:15 }}>
-                      {Number(c.valor).toLocaleString('pt-BR', { style:'currency', currency:'BRL' })}
-                    </p>
-                    <span style={{ fontSize:11, fontWeight:700, color:C.green, textTransform:'uppercase' }}>Aprovado</span>
-                  </div>
+              <div key={c.id} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, padding:'16px 18px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
+                <div>
+                  <p style={{ color:C.textLight, fontWeight:700, fontSize:15, marginBottom:4 }}>{c.titulo_jogo}</p>
+                  <p style={{ color:C.textMuted, fontSize:12 }}>{new Date(c.data).toLocaleString('pt-BR')}</p>
                 </div>
-                {(() => {
-                  const codigo = c.chave || c.steam_key || c.support_code || c.codigo_suporte;
-                  const isTicket = c.delivery_type === 'manual_ticket';
-                  if (!codigo) return null;
-                  return (
-                    <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:9, padding:'10px 14px' }}>
-                      <p style={{ color:C.textMuted, fontSize:11, marginBottom:6 }}>
-                        {isTicket ? '🎫 Código de resgate — abra um ticket no Discord' : '🔑 Chave de ativação'}
-                      </p>
-                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }}>
-                        <span style={{ fontFamily:'monospace', fontSize:13, fontWeight:700, color:C.accent, letterSpacing:'1px', wordBreak:'break-all' }}>{codigo}</span>
-                        <button onClick={() => navigator.clipboard.writeText(codigo)}
-                          style={{ background:C.primary, border:'none', color:'white', borderRadius:6, padding:'5px 12px', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0 }}>
-                          Copiar
-                        </button>
-                      </div>
-                      {isTicket && c.mensagem_entrega && (
-                        <p style={{ color:C.textMuted, fontSize:11, marginTop:6 }}>{c.mensagem_entrega}</p>
-                      )}
-                    </div>
-                  );
-                })()}
+                <div style={{ textAlign:'right' }}>
+                  <p style={{ color:C.secondary, fontWeight:800, fontSize:15 }}>
+                    {Number(c.valor).toLocaleString('pt-BR', { style:'currency', currency:'BRL' })}
+                  </p>
+                  <span style={{ fontSize:11, fontWeight:700, color:C.green, textTransform:'uppercase' }}>Aprovado</span>
+                </div>
               </div>
             ))}
           </div>
@@ -3617,19 +3426,7 @@ function AdminCouponFormModal({
           </div>
 
           <div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
-              <label style={{ ...labelStyle, margin:0 }}>Produtos aplicáveis * ({produtosSelecionados.length} selecionado{produtosSelecionados.length !== 1 ? 's' : ''})</label>
-              <div style={{ display:'flex', gap:6 }}>
-                <button type="button" onClick={() => setProdutosSelecionados(products.map(p => p.id))}
-                  style={{ background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', borderRadius:6, padding:'4px 12px', fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                  ✓ Todos os jogos
-                </button>
-                <button type="button" onClick={() => setProdutosSelecionados([])}
-                  style={{ background:'rgba(255,107,107,0.15)', border:'1px solid rgba(255,107,107,0.3)', color:'#FF6B6B', borderRadius:6, padding:'4px 12px', fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                  ✕ Limpar
-                </button>
-              </div>
-            </div>
+            <label style={labelStyle}>Produtos aplicáveis * ({produtosSelecionados.length} selecionado{produtosSelecionados.length !== 1 ? 's' : ''})</label>
             <input value={productSearch} onChange={e=>setProductSearch(e.target.value)} placeholder="🔍  Buscar produto..."
               style={{ ...inputStyle, marginBottom:8 }} onFocus={focusStyle} onBlur={blurStyle} />
             <div style={{ maxHeight:180, overflowY:'auto', border:`1px solid ${C.border}`, borderRadius:8, background:C.surface }}>
@@ -3691,11 +3488,6 @@ interface AdminSale {
   valor: number;
   metodo: string;
   status: string;
-  chave?: string | null;
-  steam_key?: string | null;
-  support_code?: string | null;
-  support_code_status?: string | null;
-  delivery_type?: string | null;
   data: string;
 }
 
@@ -3714,7 +3506,6 @@ interface AdminCoupon {
   codigo: string;
   percentual: number;
   produtosAplicaveis: number[];
-  validoParaTodos: boolean;
   validoAte: string | null;
   usosMaximos: number | null;
   usosAtuais: number;
@@ -3736,11 +3527,6 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [massaPriceModal, setMassaPriceModal] = useState(false);
-  const [massaValor, setMassaValor] = useState('');
-  const [massaModo, setMassaModo] = useState<'fixo'|'percentual'>('fixo');
-  const [massaLoading, setMassaLoading] = useState(false);
-  const [massaMsg, setMassaMsg] = useState('');
 
   const [editingCoupon, setEditingCoupon] = useState<AdminCoupon | null>(null);
   const [creatingCoupon, setCreatingCoupon] = useState(false);
@@ -3836,29 +3622,6 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'unset'; };
   }, []);
-
-  const handleMassaPrice = async () => {
-    const v = parseFloat(massaValor.replace(',', '.'));
-    if (isNaN(v) || massaValor.trim() === '') { setMassaMsg('Informe um valor válido.'); return; }
-    if (massaModo === 'fixo' && v < 0) { setMassaMsg('O preço não pode ser negativo.'); return; }
-    if (!confirm(`Aplicar ${massaModo === 'fixo' ? `preço fixo R$ ${v.toFixed(2).replace('.',',')}` : `ajuste de ${v > 0 ? '+' : ''}${v}%`} em TODOS os jogos?`)) return;
-    setMassaLoading(true); setMassaMsg('');
-    try {
-      const res = await fetch(`${API_BASE}/admin/produtos/ajuste-em-massa`, {
-        method: 'POST', headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modo: massaModo, valor: v })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.erro || 'Erro ao ajustar preços.');
-      setMassaMsg(`✓ ${data.mensagem}`);
-      await loadProdutos();
-      setTimeout(() => { setMassaPriceModal(false); setMassaValor(''); setMassaMsg(''); }, 1500);
-    } catch (e: any) {
-      setMassaMsg(e.message || 'Erro ao ajustar preços.');
-    } finally {
-      setMassaLoading(false);
-    }
-  };
 
   const handleDeleteProduct = async (id: number) => {
     setDeletingId(id);
@@ -4030,7 +3793,7 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
                   <thead>
                     <tr style={{ background:'rgba(123,47,190,0.08)' }}>
-                      {['Produto','Cliente','Valor','Método','Chave','Data'].map(h => (
+                      {['Produto','Cliente','Valor','Método','Data'].map(h => (
                         <th key={h} style={{ padding:'12px 16px', color:C.textMuted, fontWeight:600, textAlign:'left', fontSize:12, textTransform:'uppercase', letterSpacing:'0.5px' }}>{h}</th>
                       ))}
                     </tr>
@@ -4045,11 +3808,6 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
                         </td>
                         <td style={{ padding:'12px 16px' }}>
                           <span style={{ color:C.secondary, background:'rgba(123,47,190,0.12)', padding:'3px 9px', borderRadius:8, fontSize:11, fontWeight:700, textTransform:'uppercase' }}>{s.metodo}</span>
-                        </td>
-                        <td style={{ padding:'12px 16px' }}>
-                          {(() => { const k = s.chave || s.steam_key || s.support_code; return k
-                            ? <span style={{ fontFamily:'monospace', fontSize:12, color:C.accent, background:'rgba(123,47,190,0.12)', padding:'4px 10px', borderRadius:6, letterSpacing:'1px', wordBreak:'break-all' }}>{k}</span>
-                            : <span style={{ color:C.textMuted, fontSize:12 }}>—</span>; })()}
                         </td>
                         <td style={{ padding:'12px 16px', color:C.textMuted, fontSize:12 }}>{new Date(s.data).toLocaleString('pt-BR')}</td>
                       </tr>
@@ -4070,61 +3828,12 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
                 onFocus={e=>(e.target.style.borderColor=C.secondary)}
                 onBlur={e=>(e.target.style.borderColor=C.border)}
               />
-              <button onClick={() => { setMassaPriceModal(true); setMassaMsg(''); setMassaValor(''); }}
-                style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 20px', borderRadius:10, background:'rgba(123,47,190,0.15)', border:`1px solid rgba(123,47,190,0.35)`, color:C.secondary, fontWeight:700, fontSize:14, cursor:'pointer', transition:'opacity 0.15s, transform 0.15s' }}
-                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)'}}
-                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(0)'}}>
-                💰 Preço em massa
-              </button>
               <button onClick={() => setCreatingProduct(true)}
                 style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 20px', borderRadius:10, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:`0 4px 14px rgba(123,47,190,0.4)`, transition:'opacity 0.15s, transform 0.15s' }}
                 onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)'}}
                 onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(0)'}}>
                 <Plus size={16} /> Novo produto
               </button>
-
-              {/* Modal de Preço em Massa */}
-              {massaPriceModal && (
-                <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}
-                  onClick={e => { if (e.target === e.currentTarget) setMassaPriceModal(false); }}>
-                  <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:16, padding:28, width:'100%', maxWidth:400 }}>
-                    <h3 style={{ color:C.textLight, fontWeight:800, fontSize:17, marginBottom:4 }}>💰 Aplicar preço em todos os jogos</h3>
-                    <p style={{ color:C.textMuted, fontSize:12, marginBottom:20 }}>Isso vai atualizar o preço de <b style={{color:C.secondary}}>todos os produtos</b> de uma vez.</p>
-
-                    <label style={{ color:C.textMuted, fontSize:12, fontWeight:600, display:'block', marginBottom:6 }}>Modo</label>
-                    <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-                      {(['fixo','percentual'] as const).map(m => (
-                        <button key={m} onClick={() => setMassaModo(m)}
-                          style={{ flex:1, padding:'9px 0', borderRadius:9, border:`1px solid ${massaModo===m ? C.secondary : C.border}`, background: massaModo===m ? 'rgba(123,47,190,0.18)' : C.surface, color: massaModo===m ? C.secondary : C.textMuted, fontWeight:700, fontSize:13, cursor:'pointer' }}>
-                          {m === 'fixo' ? '💵 Preço fixo' : '📊 Percentual'}
-                        </button>
-                      ))}
-                    </div>
-
-                    <label style={{ color:C.textMuted, fontSize:12, fontWeight:600, display:'block', marginBottom:6 }}>
-                      {massaModo === 'fixo' ? 'Novo preço (R$)' : 'Ajuste (ex: -10 para -10%, +20 para +20%)'}
-                    </label>
-                    <input value={massaValor} onChange={e => { setMassaValor(e.target.value); setMassaMsg(''); }}
-                      placeholder={massaModo === 'fixo' ? 'Ex: 49,90' : 'Ex: -10'}
-                      style={{ width:'100%', boxSizing:'border-box', background:C.surface, border:`1px solid ${C.border}`, borderRadius:9, padding:'10px 14px', color:C.text, fontSize:14, outline:'none', marginBottom:16 }} />
-
-                    {massaMsg && (
-                      <p style={{ fontSize:12, marginBottom:12, color: massaMsg.startsWith('✓') ? '#4caf6e' : '#FF6B6B' }}>{massaMsg}</p>
-                    )}
-
-                    <div style={{ display:'flex', gap:10 }}>
-                      <button onClick={() => setMassaPriceModal(false)}
-                        style={{ flex:1, padding:'11px 0', borderRadius:9, background:C.surface, border:`1px solid ${C.border}`, color:C.textMuted, fontWeight:700, fontSize:14, cursor:'pointer' }}>
-                        Cancelar
-                      </button>
-                      <button onClick={handleMassaPrice} disabled={massaLoading}
-                        style={{ flex:2, padding:'11px 0', borderRadius:9, background:`linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor: massaLoading ? 'not-allowed' : 'pointer', opacity: massaLoading ? 0.7 : 1 }}>
-                        {massaLoading ? 'Aplicando...' : 'Aplicar em todos'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div style={{ overflowX:'auto', borderRadius:12, border:`1px solid ${C.border}` }}>
@@ -4393,7 +4102,7 @@ export default function NeplimStore() {
   const handleAddToCart = (item: any, variantLabel: string) => {
     if (!isLoggedIn) { setShowLogin(true); return; }
     cart.addToCart(
-      { id: (item as any).id, title: item.title, price: item.price, originalPrice: item.originalPrice, discount: item.discount, appId: item.appId, variants: item.variants },
+      { title: item.title, price: item.price, originalPrice: item.originalPrice, discount: item.discount, appId: item.appId, variants: item.variants },
       variantLabel
     );
   };
@@ -4403,7 +4112,7 @@ export default function NeplimStore() {
     if (!isLoggedIn) { setShowLogin(true); return; }
     setShowCart(false);
     setCheckoutFromCart(true);
-    setCheckoutItem({ title: '', price: 'R$ 24,99' }); // placeholder; o CheckoutModal usa cartItems quando isCartCheckout
+    setCheckoutItem({ title: '', price: 'R$ 0,00' }); // placeholder; o CheckoutModal usa cartItems quando isCartCheckout
   };
 
   return (
@@ -4411,23 +4120,6 @@ export default function NeplimStore() {
       <div style={{ position:'fixed', top:0, left:0, right:0, height:'100vh', pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
         <div className="purple-orb" style={{ position:'absolute', top:'-20%', left:'-10%', width:700, height:700, borderRadius:'50%', background:'radial-gradient(circle, rgba(123,47,190,0.12) 0%, transparent 65%)' }} />
         <div className="purple-orb" style={{ position:'absolute', top:'30%', right:'-15%', width:800, height:800, borderRadius:'50%', background:'radial-gradient(circle, rgba(157,78,221,0.08) 0%, transparent 65%)', animationDelay:'2.5s' }} />
-        <div className="purple-orb" style={{ position:'absolute', bottom:'-10%', left:'30%', width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(123,47,190,0.1) 0%, transparent 65%)', animationDelay:'1.2s' }} />
-        {[...Array(12)].map((_,i) => (
-          <div key={i} style={{
-            position:'absolute',
-            width: `${4 + (i % 4) * 3}px`,
-            height: `${4 + (i % 4) * 3}px`,
-            borderRadius:'50%',
-            background: i % 3 === 0 ? 'rgba(199,125,255,0.6)' : i % 3 === 1 ? 'rgba(123,47,190,0.5)' : 'rgba(255,255,255,0.3)',
-            left: `${8 + (i * 7.5) % 85}%`,
-            top: `${10 + (i * 13) % 75}%`,
-            animation: `particleFloat ${3 + (i % 4)}s ease-in-out infinite`,
-            animationDelay: `${(i * 0.4) % 3}s`,
-            pointerEvents:'none',
-            filter:'blur(1px)',
-            zIndex:0
-          }} />
-        ))}
       </div>
 
       <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', minHeight:'100vh' }}>
@@ -4436,12 +4128,12 @@ export default function NeplimStore() {
         <main style={{ flex:1 }}>
           <HeroSlider onBuy={g => {
             const jogo = ALL_GAMES.find(j => j.title.toLowerCase() === g.title.toLowerCase() || j.appId === g.appId);
-            if (jogo) openProduct({ id:jogo.id, title:jogo.title, price:jogo.price, originalPrice:jogo.originalPrice, discount:jogo.discount, appId:jogo.appId, variants:jogo.variants });
+            if (jogo) openProduct({ title:jogo.title, price:jogo.price, originalPrice:jogo.originalPrice, discount:jogo.discount, appId:jogo.appId, variants:jogo.variants });
             else openProduct({ title:g.title, price:g.price, appId:g.appId });
           }} />
           <CategoriesSection selected={category} onSelect={setCategory} />
           <GamesGrid category={category} search={search}
-            onGame={g => openProduct({ id:g.id, title:g.title, price:g.price, originalPrice:g.originalPrice, discount:g.discount, appId:g.appId, variants:g.variants })}
+            onGame={g => openProduct({ title:g.title, price:g.price, originalPrice:g.originalPrice, discount:g.discount, appId:g.appId, variants:g.variants })}
           />
         </main>
 
