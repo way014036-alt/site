@@ -34,7 +34,9 @@ interface FeaturedGame {
   appId?: number;
   title: string;
   youtubeId: string;
-  price: string;
+  // O preço do destaque NÃO deve ser fixo aqui.
+  // Ele vem do produto real carregado em /produtos, para respeitar o painel ADM.
+  price?: string;
   description: string;
   cover: string;
   badge: string;
@@ -87,12 +89,12 @@ interface AccountProduct {
 
 // ── Data: Featured Games ───────────────────────────────────
 const FEATURED: FeaturedGame[] = [
-  { id:1, appId:3764200, title:'Resident Evil Requiem', youtubeId:'RJ7eRQgJBbo', price:'R$ 24,99', badge:'Terror Absoluto', description:'O próximo e aterrorizante capítulo da icônica franquia de survival horror.', cover:'https://i.ytimg.com/vi/RJ7eRQgJBbo/maxresdefault.jpg' },
-  { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', price:'R$ 24,99', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
-  { id:3, appId:1174180, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', price:'R$ 24,99', badge:'Premiado', description:'cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
-  { id:4, appId:1203220, title:'Pragmata', youtubeId:'oncaa_fMsyw', price:'R$ 24,99', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
-  { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', price:'R$ 24,99', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
-  { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', price:'R$ 24,99', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
+  { id:1, appId:3764200, title:'Resident Evil Requiem', youtubeId:'RJ7eRQgJBbo', badge:'Terror Absoluto', description:'O próximo e aterrorizante capítulo da icônica franquia de survival horror.', cover:'https://i.ytimg.com/vi/RJ7eRQgJBbo/maxresdefault.jpg' },
+  { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
+  { id:3, appId:1091500, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', badge:'Premiado', description:'Cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social.', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
+  { id:4, appId:3357650, title:'Pragmata', youtubeId:'oncaa_fMsyw', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
+  { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
+  { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
 ];
 
 const CATEGORIES = ['Todos','Ação','RPG','FPS','Aventura','Estratégia','Indie','Simulação','Terror','Esportes'];
@@ -568,7 +570,7 @@ const GAME_SEEDS: GameSeed[] = [
   [986130,"Shadows of Doubt",false],
   [1592280,"Selaco",false],
   [410830,"Lego Batman",false],
-  [1203220,"Pragmata",false],
+  [3357650,"Pragmata",false],
   [2929460,"007 First Light",false],
 ];
 
@@ -1465,16 +1467,55 @@ function SettingsModal({ token, username, accountEmail, onClose, onLogout }: {
   );
 }
 
+type FeaturedDisplayGame = FeaturedGame & {
+  price: string;
+  originalPrice?: string;
+  discount?: number;
+  variants?: GameVariant[];
+  category?: string;
+  reviewScore?: string;
+};
+
+function normalizeGameTitle(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function findProductForFeatured(featured: FeaturedGame, products: Game[]) {
+  return products.find(product =>
+    (featured.appId && Number(product.appId) === Number(featured.appId)) ||
+    normalizeGameTitle(product.title) === normalizeGameTitle(featured.title)
+  );
+}
+
+function buildFeaturedDisplayList(products: Game[]): FeaturedDisplayGame[] {
+  return FEATURED.map(featured => {
+    const product = findProductForFeatured(featured, products);
+    return {
+      ...featured,
+      id: product?.id ?? featured.id,
+      appId: product?.appId ?? featured.appId,
+      title: product?.title ?? featured.title,
+      price: product?.price ?? featured.price ?? 'R$ 24,99',
+      originalPrice: product?.originalPrice,
+      discount: product?.discount,
+      variants: product?.variants,
+      category: product?.category,
+      reviewScore: product?.reviewScore,
+    };
+  });
+}
+
 /* ═══════════════════════════════════════════════════════════
    HERO SLIDER
 ═══════════════════════════════════════════════════════════ */
 const CLIP_DURATION = 30;
 
-function HeroSlider({ onBuy }: { onBuy: (g: FeaturedGame) => void }) {
+function HeroSlider({ products, onBuy }: { products: Game[]; onBuy: (g: FeaturedDisplayGame) => void }) {
   const [active, setActive] = useState(0);
   const [iframeKey, setIframeKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const featuredGames = buildFeaturedDisplayList(products);
 
   useEffect(() => {
     setPaused(false); setElapsed(0);
@@ -1489,11 +1530,15 @@ function HeroSlider({ onBuy }: { onBuy: (g: FeaturedGame) => void }) {
 
   useEffect(() => {
     if (!paused) return;
-    const t = setTimeout(() => { setActive(a => (a + 1) % FEATURED.length); setIframeKey(k => k + 1); }, 2000);
+    const t = setTimeout(() => { setActive(a => (a + 1) % featuredGames.length); setIframeKey(k => k + 1); }, 2000);
     return () => clearTimeout(t);
-  }, [paused]);
+  }, [paused, featuredGames.length]);
 
-  const g = FEATURED[active];
+  useEffect(() => {
+    if (active >= featuredGames.length) setActive(0);
+  }, [active, featuredGames.length]);
+
+  const g = featuredGames[active] ?? featuredGames[0];
   const switchSlide = (i: number) => { setActive(i); setIframeKey(k => k + 1); };
   const replayCurrent = () => { setIframeKey(k => k + 1); };
 
@@ -1548,7 +1593,7 @@ function HeroSlider({ onBuy }: { onBuy: (g: FeaturedGame) => void }) {
       </div>
 
       <div style={{ position:'relative', zIndex:2, padding:'28px 40px 36px', display:'flex', justifyContent:'center', gap:12 }}>
-        {FEATURED.map((fg, i) => (
+        {featuredGames.map((fg, i) => (
           <div key={fg.id} className="thumb" onClick={() => switchSlide(i)}
             style={{ width:110, height:62, borderRadius:10, overflow:'hidden', cursor:'pointer', border:`2px solid ${i===active ? C.secondary : 'rgba(123,47,190,0.3)'}`, opacity:i===active?1:0.5, transition:'all 0.2s', flexShrink:0 }}>
             <img src={fg.cover} alt={fg.title} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
@@ -1647,11 +1692,10 @@ function useProducts() {
 /* ═══════════════════════════════════════════════════════════
    GAMES GRID
 ═══════════════════════════════════════════════════════════ */
-function GamesGrid({ category, search, onGame }: { category: string; search: string; onGame: (g: Game) => void }) {
+function GamesGrid({ category, search, products, loading, usingFallback, onGame }: { category: string; search: string; products: Game[]; loading: boolean; usingFallback: boolean; onGame: (g: Game) => void }) {
   const PAGE_SIZE = 16;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const { products, loading, usingFallback } = useProducts();
 
   const list = products.filter(g => {
     const catOk = category === 'Todos' || g.category === category;
@@ -3996,6 +4040,7 @@ function AdminPanel({ adminToken, onClose, onLogout }: { adminToken: string; onC
 export default function NeplimStore() {
   useGlobalStyles();
   const cart = useCart();
+  const { products, loading, usingFallback } = useProducts();
 
   const [showLogin, setShowLogin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -4126,13 +4171,24 @@ export default function NeplimStore() {
         <Header onLoginClick={() => setShowLogin(true)} isLoggedIn={isLoggedIn} username={username} onLogout={handleLogout} searchQuery={search} onSearch={setSearch} onMinhasCompras={() => setShowPurchases(true)} onConfiguracoes={() => setShowSettings(true)} onCartClick={() => setShowCart(true)} cartCount={cart.totalItems} />
 
         <main style={{ flex:1 }}>
-          <HeroSlider onBuy={g => {
-            const jogo = ALL_GAMES.find(j => j.title.toLowerCase() === g.title.toLowerCase() || j.appId === g.appId);
-            if (jogo) openProduct({ title:jogo.title, price:jogo.price, originalPrice:jogo.originalPrice, discount:jogo.discount, appId:jogo.appId, variants:jogo.variants });
-            else openProduct({ title:g.title, price:g.price, appId:g.appId });
-          }} />
+          <HeroSlider
+            products={products}
+            onBuy={g => openProduct({
+              title:g.title,
+              price:g.price,
+              originalPrice:g.originalPrice,
+              discount:g.discount,
+              appId:g.appId,
+              variants:g.variants
+            })}
+          />
           <CategoriesSection selected={category} onSelect={setCategory} />
-          <GamesGrid category={category} search={search}
+          <GamesGrid
+            category={category}
+            search={search}
+            products={products}
+            loading={loading}
+            usingFallback={usingFallback}
             onGame={g => openProduct({ title:g.title, price:g.price, originalPrice:g.originalPrice, discount:g.discount, appId:g.appId, variants:g.variants })}
           />
         </main>
