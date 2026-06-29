@@ -2682,39 +2682,79 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
         ))}
       </div>
 
-      {/* Body — Key gerada */}
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 60px', boxSizing: 'border-box' }}>
-        <div style={{ background:'#1a1a1a', border:`1px solid ${C.primary}`, borderRadius:16, padding:32, textAlign:'center', boxSizing:'border-box', animation:'popIn 0.35s ease' }}>
-          <div style={{ width:68, height:68, borderRadius:'50%', background:'rgba(76,175,80,0.15)', border:'2px solid rgba(76,175,80,0.4)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
-            <CheckCircle size={32} color={C.green} />
+      {/* Body — Sucesso */}
+      <div style={{ maxWidth:520, margin:'0 auto', padding:'32px 20px 60px', boxSizing:'border-box' }}>
+
+        {/* Agradecimento */}
+        <div style={{ background:'linear-gradient(135deg,#1a1a2e,#16213e)', border:`1px solid rgba(123,47,190,0.5)`, borderRadius:20, padding:'28px 28px 24px', textAlign:'center', marginBottom:14, animation:'popIn 0.4s cubic-bezier(.34,1.56,.64,1)', boxShadow:'0 0 40px rgba(123,47,190,0.2)' }}>
+          <div style={{ width:70, height:70, borderRadius:'50%', background:'rgba(76,175,80,0.15)', border:'2px solid rgba(76,175,80,0.5)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', boxShadow:'0 0 20px rgba(76,175,80,0.3)' }}>
+            <CheckCircle size={34} color={C.green} />
           </div>
-          <h2 style={{ fontSize:22, fontWeight:900, color:'#fff', marginBottom:6 }}>Pagamento aprovado!</h2>
-          <p style={{ color:'#888', fontSize:14, marginBottom:24 }}>
-            Sua chave de <strong style={{ color:C.secondary }}>{effectiveItem.title}</strong> já está disponível abaixo.
+          <h2 style={{ fontSize:22, fontWeight:900, color:'#fff', marginBottom:10 }}>Compra realizada com sucesso! 🎉</h2>
+          <p style={{ color:'#bbb', fontSize:14, lineHeight:1.7, marginBottom:4 }}>
+            Muito obrigado por comprar com a gente! Sua confiança significa tudo para nós.<br/>
+            <strong style={{ color:C.secondary }}>{effectiveItem.title}</strong> é seu — agora é só resgatar.
           </p>
-
-          {/* Card da Key — mesmo estilo do bloco do Pix */}
-          <div style={{ background:'#111', border:'1px solid #2a2a2a', borderRadius:10, padding:'16px', marginBottom:16, boxSizing:'border-box' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, color:C.textMuted, fontSize:12, marginBottom:10 }}>
-              <Key size={14} /> Sua Chave de Ativação (Steam Key)
-            </div>
-            <div style={{ display:'flex', gap:8, background:'#0a0a0a', border:`1px solid ${C.border}`, borderRadius:8, padding:'12px 14px', alignItems:'center' }}>
-              <div style={{ flex:1, fontSize:16, fontWeight:700, letterSpacing:'1px', color:C.accent, fontFamily:'monospace', wordBreak:'break-all', textAlign:'left' }}>{gameKey}</div>
-            </div>
-            <button onClick={handleCopyKey} style={{ width:'100%', marginTop:10, background: keyCopied ? C.green : C.primary, border:'none', color:'white', borderRadius:8, padding:'11px', fontSize:14, fontWeight:700, cursor:'pointer' }}>
-              {keyCopied ? 'Copiada!' : 'Copiar chave'}
-            </button>
-          </div>
-
-          <p style={{ color:'#666', fontSize:12, lineHeight:1.6, marginBottom:24 }}>
-            Guarde essa chave com cuidado. Ela também ficará disponível a qualquer momento em <strong style={{ color:'#999' }}>Minhas Compras</strong>.
-          </p>
-
-          <button onClick={onClose}
-            style={{ width:'100%', padding:'14px', borderRadius:10, background:C.primary, border:'none', color:'white', fontWeight:700, fontSize:15, cursor:'pointer' }}>
-            Voltar para a Loja
-          </button>
         </div>
+
+        {/* Código de resgate */}
+        <div style={{ background:'rgba(123,47,190,0.08)', border:`1px solid rgba(199,125,255,0.35)`, borderRadius:14, padding:'18px 20px', marginBottom:14, boxShadow:'0 0 20px rgba(123,47,190,0.15)' }}>
+          <p style={{ color:C.textMuted, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'1px', marginBottom:8 }}>
+            🎫 Seu código de resgate
+          </p>
+          <div style={{ display:'flex', gap:10, alignItems:'center', background:'rgba(0,0,0,0.4)', borderRadius:10, padding:'12px 16px', marginBottom:10 }}>
+            <span style={{ flex:1, fontFamily:'monospace', fontSize:15, fontWeight:800, color:C.accent, letterSpacing:'2px', wordBreak:'break-all' }}>{gameKey}</span>
+          </div>
+          <button onClick={handleCopyKey}
+            style={{ width:'100%', padding:'11px', borderRadius:10, background: keyCopied ? C.green : `linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor:'pointer', transition:'all 0.2s', boxShadow: keyCopied ? '0 0 20px rgba(76,175,80,0.4)' : '0 0 16px rgba(123,47,190,0.35)' }}>
+            {keyCopied ? '✓ Copiado!' : '📋 Copiar código'}
+          </button>
+          <p style={{ color:'#555', fontSize:11, marginTop:8, textAlign:'center' }}>
+            Este código também estará disponível em <strong style={{ color:'#888' }}>Minhas Compras</strong>
+          </p>
+        </div>
+
+        {/* Card Discord */}
+        <div style={{ background:'#111', border:'1px solid #1e1e1e', borderRadius:16, padding:'22px 24px', marginBottom:14 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+            <div style={{ width:38, height:38, borderRadius:10, background:'#5865F2', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <svg width="20" height="20" viewBox="0 0 71 55" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.5.7a40 40 0 0 0-1.8 3.6 54 54 0 0 0-16.3 0A40 40 0 0 0 25.6.7 58.3 58.3 0 0 0 11 4.9C1.6 19 -1 32.7.3 46.3a58.9 58.9 0 0 0 17.9 9 42 42 0 0 0 3.7-6 38.3 38.3 0 0 1-5.9-2.8l1.4-1.1a42 42 0 0 0 36.2 0l1.4 1.1a38.5 38.5 0 0 1-5.9 2.8 42 42 0 0 0 3.7 6A58.7 58.7 0 0 0 70.7 46C72.3 30.2 68 16.6 60.1 4.9ZM23.7 37.8c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.3 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Z"/></svg>
+            </div>
+            <div>
+              <p style={{ color:'white', fontWeight:800, fontSize:15, marginBottom:1 }}>Como pegar sua Steam Key?</p>
+              <p style={{ color:'#555', fontSize:12 }}>É simples e rápido — siga os passos abaixo</p>
+            </div>
+          </div>
+
+          <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:18 }}>
+            {[
+              { n:'1', text:'Entre no nosso servidor do Discord pelo botão abaixo' },
+              { n:'2', text:'Vá até o canal de tickets e abra um na aba COMPRAS' },
+              { n:'3', text:'Envie o código de resgate acima no ticket' },
+              { n:'4', text:'Nossa equipe entrega sua Steam Key em instantes!' },
+            ].map((s, i) => (
+              <div key={i} style={{ display:'flex', gap:12, alignItems:'center' }}>
+                <div style={{ width:26, height:26, borderRadius:'50%', background:`linear-gradient(135deg,${C.primary},${C.secondary})`, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:12, color:'white', flexShrink:0 }}>{s.n}</div>
+                <p style={{ color:'#aaa', fontSize:13, lineHeight:1.4, margin:0 }}>{s.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <a href="https://discord.gg/ZqZSYv32xY" target="_blank" rel="noopener noreferrer"
+            style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, width:'100%', padding:'13px', borderRadius:11, background:'#5865F2', border:'none', color:'white', fontWeight:700, fontSize:15, cursor:'pointer', textDecoration:'none', boxShadow:'0 4px 18px rgba(88,101,242,0.45)', transition:'all 0.2s' }}
+            onMouseEnter={e=>(e.currentTarget as HTMLAnchorElement).style.transform='translateY(-2px)'}
+            onMouseLeave={e=>(e.currentTarget as HTMLAnchorElement).style.transform='translateY(0)'}>
+            <svg width="20" height="20" viewBox="0 0 71 55" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.5.7a40 40 0 0 0-1.8 3.6 54 54 0 0 0-16.3 0A40 40 0 0 0 25.6.7 58.3 58.3 0 0 0 11 4.9C1.6 19 -1 32.7.3 46.3a58.9 58.9 0 0 0 17.9 9 42 42 0 0 0 3.7-6 38.3 38.3 0 0 1-5.9-2.8l1.4-1.1a42 42 0 0 0 36.2 0l1.4 1.1a38.5 38.5 0 0 1-5.9 2.8 42 42 0 0 0 3.7 6A58.7 58.7 0 0 0 70.7 46C72.3 30.2 68 16.6 60.1 4.9ZM23.7 37.8c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.3 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Z"/></svg>
+            Entrar no Discord agora
+          </a>
+        </div>
+
+        <button onClick={onClose}
+          style={{ width:'100%', padding:'12px', borderRadius:11, background:'transparent', border:`1px solid ${C.border}`, color:'#777', fontWeight:600, fontSize:14, cursor:'pointer', transition:'all 0.2s' }}
+          onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=C.secondary;(e.currentTarget as HTMLButtonElement).style.color='white'}}
+          onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=C.border;(e.currentTarget as HTMLButtonElement).style.color='#777'}}>
+          Voltar para a Loja
+        </button>
       </div>
     </div>
   );
