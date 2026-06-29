@@ -1990,7 +1990,7 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
     : fallbackHero;
 
   const coverBase = item.appId 
-    ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${item.appId}/library_600x900.jpg`
+    ? coverImg(item.appId)
     : fallbackCover;
 
   const faqData = [
@@ -2122,12 +2122,13 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   onError={(e) => {
                     const t = e.currentTarget;
+                    const aid = item.appId || 0;
                     if (!t.dataset.tried) {
                       t.dataset.tried = '1';
-                      t.src = leftBgAlt;
+                      t.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${aid}/header.jpg`;
                     } else if (t.dataset.tried === '1') {
                       t.dataset.tried = '2';
-                      t.src = leftBgBanner;
+                      t.src = `https://img.youtube.com/vi/${item.appId}/maxresdefault.jpg`;
                     } else {
                       t.src = fallbackCover;
                     }
