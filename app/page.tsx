@@ -1988,11 +1988,7 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
     : fallbackHero;
 
   const coverBase = item.appId 
-    ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/library_600x900_2x.jpg`
-    : fallbackCover;
-
-  const coverDlc = item.appId
-    ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/library_600x900_2x.jpg`
+    ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${item.appId}/library_600x900.jpg`
     : fallbackCover;
 
   const faqData = [
@@ -2067,14 +2063,14 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
             <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:28, width:'100%', maxWidth:'440px' }}>
               <div style={{ display:'flex', gap:10, width:'100%' }}>
                 <button 
-                  onClick={() => onConfirm(item, selectedEdition === 'base' ? 'Standard Edition' : 'Complete Edition + All DLCs')}
+                  onClick={() => onConfirm(item, 'Jogo Base + DLC')}
                   style={{ flex:1, padding:'18px', background: 'linear-gradient(135deg, #7b2fbe, #a855f7)', border: 'none', borderRadius: '10px', color: '#FFF', fontWeight: 700, fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(123, 47, 190, 0.3)' }}
                 >
                   <CreditCard size={20} /> Comprar agora
                 </button>
                 <button
                   onClick={() => {
-                    onAddToCart(item, selectedEdition === 'base' ? 'Standard Edition' : 'Complete Edition + All DLCs');
+                    onAddToCart(item, 'Jogo Base + DLC');
                     setAddedFeedback(true);
                     setTimeout(() => setAddedFeedback(false), 1800);
                   }}
@@ -2115,37 +2111,37 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
             <h2 style={{ fontSize: '28px', fontWeight: 800, margin: '4px 0 0 0' }}>Escolha a edição do jogo</h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', width: '100%', marginBottom: '40px' }}>
-            <div onClick={() => setSelectedEdition('base')} style={{ backgroundColor: '#0c0c12', borderRadius: '16px', border: `2px solid ${selectedEdition === 'base' ? '#7b2fbe' : 'rgba(255,255,255,0.03)'}`, padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: selectedEdition === 'base' ? '0 0 25px rgba(123, 47, 190, 0.3)' : 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '40px' }}>
+            <div style={{ backgroundColor: '#0c0c12', borderRadius: '16px', border: '2px solid #7b2fbe', padding: '24px', display: 'flex', flexDirection: 'column', boxShadow: '0 0 30px rgba(123, 47, 190, 0.4)', maxWidth: '280px', width: '100%' }}>
               <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '2/3', marginBottom: '16px', backgroundColor: '#060609' }}>
-                <img src={coverBase} alt="Standard" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = leftBgAlt; }} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>Jogo Base</h3>
-                <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${selectedEdition === 'base' ? '#7b2fbe' : 'rgba(255,255,255,0.2)'}`, backgroundColor: selectedEdition === 'base' ? '#7b2fbe' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {selectedEdition === 'base' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#FFF' }} />}
-                </div>
-              </div>
-              <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '12px', margin: '0 0 16px 0', lineHeight: '1.4' }}>Versão digital padrão contendo o jogo completo de forma imediata.</p>
-              <div style={{ marginTop: 'auto', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ fontSize: '22px', fontWeight: 800 }}>{priceBaseStr}</span>
-              </div>
-            </div>
-
-            <div onClick={() => setSelectedEdition('dlc')} style={{ backgroundColor: '#0c0c12', borderRadius: '16px', border: `2px solid ${selectedEdition === 'dlc' ? '#7b2fbe' : 'rgba(255,255,255,0.03)'}`, padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: selectedEdition === 'dlc' ? '0 0 25px rgba(123, 47, 190, 0.3)' : 'none' }}>
-              <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '2/3', marginBottom: '16px', backgroundColor: '#060609' }}>
-                <img src={coverDlc} alt="Complete" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = leftBgAlt; }} />
+                <img
+                  src={coverBase}
+                  alt={item.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    const t = e.currentTarget;
+                    if (!t.dataset.tried) {
+                      t.dataset.tried = '1';
+                      t.src = leftBgAlt;
+                    } else if (t.dataset.tried === '1') {
+                      t.dataset.tried = '2';
+                      t.src = leftBgBanner;
+                    } else {
+                      t.src = fallbackCover;
+                    }
+                  }}
+                />
                 <span style={{ position: 'absolute', top: '12px', right: '12px', backgroundColor: '#7b2fbe', color: '#FFF', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 700 }}>RECOMENDADO</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>Jogo Base + DLCs</h3>
-                <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${selectedEdition === 'dlc' ? '#7b2fbe' : 'rgba(255,255,255,0.2)'}`, backgroundColor: selectedEdition === 'dlc' ? '#7b2fbe' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {selectedEdition === 'dlc' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#FFF' }} />}
+                <h3 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>Jogo Base + DLC</h3>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #7b2fbe', backgroundColor: '#7b2fbe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#FFF' }} />
                 </div>
               </div>
-              <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '12px', margin: '0 0 16px 0', lineHeight: '1.4' }}>Acompanha todas as expansões, pacotes adicionais e bônus Deluxe lançados.</p>
+              <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '12px', margin: '0 0 16px 0', lineHeight: '1.4' }}>Inclui o jogo completo + todas as expansões e DLCs disponíveis.</p>
               <div style={{ marginTop: 'auto', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ fontSize: '22px', fontWeight: 800 }}>{priceDlcStr}</span>
+                <span style={{ fontSize: '22px', fontWeight: 800 }}>{priceBaseStr}</span>
               </div>
             </div>
           </div>
