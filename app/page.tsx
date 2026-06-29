@@ -93,7 +93,7 @@ const FEATURED: FeaturedGame[] = [
   { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
   { id:3, appId:1091500, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', badge:'Premiado', description:'Cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social.', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
   { id:4, appId:3357650, title:'Pragmata', youtubeId:'oncaa_fMsyw', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
-  { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
+  { id:5, appId:2215200, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
   { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
 ];
 
@@ -569,7 +569,7 @@ const GAME_SEEDS: GameSeed[] = [
   [1658150,"Moonstone Island",false],
   [986130,"Shadows of Doubt",false],
   [1592280,"Selaco",false],
-  [410830,"Lego Batman",false],
+  [2215200,"Lego Batman",false],
   [3357650,"Pragmata",false],
   [2929460,"007 First Light",false],
 ];
@@ -1113,6 +1113,8 @@ const COVER_PLACEHOLDER =
 // Manual overrides for games whose Steam library_600x900.jpg is unavailable
 // at the standard CDN path (newer titles use hashed asset URLs).
 const COVER_OVERRIDES: Record<number, string> = {
+  // LEGO Batman: Legacy of the Dark Knight
+  2215200: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2215200/library_600x900.jpg',
   // Resident Evil Requiem
   3764200: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3764200/ce5437442768e38eb575f205ab9397d0264017b0/header.jpg',
   // Escape from Tarkov
