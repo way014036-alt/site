@@ -93,7 +93,7 @@ const FEATURED: FeaturedGame[] = [
   { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
   { id:3, appId:1091500, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', badge:'Premiado', description:'Cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social.', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
   { id:4, appId:3357650, title:'Pragmata', youtubeId:'oncaa_fMsyw', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
-  { id:5, appId:2215200, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://legobatmangame.com/_astro/og-image.BcIYb3Fq.jpg' },
+  { id:5, appId:410830, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
   { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
 ];
 
@@ -569,7 +569,7 @@ const GAME_SEEDS: GameSeed[] = [
   [1658150,"Moonstone Island",false],
   [986130,"Shadows of Doubt",false],
   [1592280,"Selaco",false],
-  [2215200,"Lego Batman",false],
+  [410830,"Lego Batman",false],
   [3357650,"Pragmata",false],
   [2929460,"007 First Light",false],
 ];
@@ -1113,8 +1113,6 @@ const COVER_PLACEHOLDER =
 // Manual overrides for games whose Steam library_600x900.jpg is unavailable
 // at the standard CDN path (newer titles use hashed asset URLs).
 const COVER_OVERRIDES: Record<number, string> = {
-  // LEGO Batman: Legacy of the Dark Knight
-  2215200: 'https://legobatmangame.com/_astro/og-image.BcIYb3Fq.jpg',
   // Resident Evil Requiem
   3764200: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3764200/ce5437442768e38eb575f205ab9397d0264017b0/header.jpg',
   // Escape from Tarkov
@@ -1981,17 +1979,34 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
   const fallbackCover = "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=600";
   const fallbackHero = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200";
 
-  const leftBgBanner = item.appId
-    ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/library_hero.jpg`
-    : fallbackHero;
+  // Se o jogo tiver um override manual de capa (ex: LEGO Batman, que não tem
+  // assets padrão na CDN da Steam), usamos ele direto — assim evitamos tentar
+  // carregar um library_hero/header/library_600x900 que não existe pra esse appId.
+  const overrideCover = item.appId ? COVER_OVERRIDES[item.appId] : undefined;
 
-  const leftBgAlt = item.appId
-    ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/header.jpg`
-    : fallbackHero;
+  const leftBgBanner = overrideCover
+    ? overrideCover
+    : item.appId
+      ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/library_hero.jpg`
+      : fallbackHero;
 
-  const coverBase = item.appId 
-    ? coverImg(item.appId)
-    : fallbackCover;
+  const leftBgAlt = overrideCover
+    ? overrideCover
+    : item.appId
+      ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/header.jpg`
+      : fallbackHero;
+
+  const coverBase = overrideCover
+    ? overrideCover
+    : item.appId 
+      ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/library_600x900_2x.jpg`
+      : fallbackCover;
+
+  const coverDlc = overrideCover
+    ? overrideCover
+    : item.appId
+      ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/library_600x900_2x.jpg`
+      : fallbackCover;
 
   const faqData = [
     { q: "Como vou receber o jogo?", a: "Imediatamente após a aprovação do Pix, a sua chave de ativação oficial da Steam é exibida na tela e enviada ao seu e-mail cadastrado." },
@@ -2065,14 +2080,14 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
             <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:28, width:'100%', maxWidth:'440px' }}>
               <div style={{ display:'flex', gap:10, width:'100%' }}>
                 <button 
-                  onClick={() => onConfirm(item, 'Jogo Base + DLC')}
+                  onClick={() => onConfirm(item, selectedEdition === 'base' ? 'Standard Edition' : 'Complete Edition + All DLCs')}
                   style={{ flex:1, padding:'18px', background: 'linear-gradient(135deg, #7b2fbe, #a855f7)', border: 'none', borderRadius: '10px', color: '#FFF', fontWeight: 700, fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(123, 47, 190, 0.3)' }}
                 >
                   <CreditCard size={20} /> Comprar agora
                 </button>
                 <button
                   onClick={() => {
-                    onAddToCart(item, 'Jogo Base + DLC');
+                    onAddToCart(item, selectedEdition === 'base' ? 'Standard Edition' : 'Complete Edition + All DLCs');
                     setAddedFeedback(true);
                     setTimeout(() => setAddedFeedback(false), 1800);
                   }}
@@ -2113,38 +2128,37 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
             <h2 style={{ fontSize: '28px', fontWeight: 800, margin: '4px 0 0 0' }}>Escolha a edição do jogo</h2>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '40px' }}>
-            <div style={{ backgroundColor: '#0c0c12', borderRadius: '16px', border: '2px solid #7b2fbe', padding: '24px', display: 'flex', flexDirection: 'column', boxShadow: '0 0 30px rgba(123, 47, 190, 0.4)', maxWidth: '280px', width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', width: '100%', marginBottom: '40px' }}>
+            <div onClick={() => setSelectedEdition('base')} style={{ backgroundColor: '#0c0c12', borderRadius: '16px', border: `2px solid ${selectedEdition === 'base' ? '#7b2fbe' : 'rgba(255,255,255,0.03)'}`, padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: selectedEdition === 'base' ? '0 0 25px rgba(123, 47, 190, 0.3)' : 'none' }}>
               <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '2/3', marginBottom: '16px', backgroundColor: '#060609' }}>
-                <img
-                  src={coverBase}
-                  alt={item.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(e) => {
-                    const t = e.currentTarget;
-                    const aid = item.appId || 0;
-                    if (!t.dataset.tried) {
-                      t.dataset.tried = '1';
-                      t.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${aid}/header.jpg`;
-                    } else if (t.dataset.tried === '1') {
-                      t.dataset.tried = '2';
-                      t.src = `https://img.youtube.com/vi/${item.appId}/maxresdefault.jpg`;
-                    } else {
-                      t.src = fallbackCover;
-                    }
-                  }}
-                />
+                <img src={coverBase} alt="Standard" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = leftBgAlt; }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <h3 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>Jogo Base</h3>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${selectedEdition === 'base' ? '#7b2fbe' : 'rgba(255,255,255,0.2)'}`, backgroundColor: selectedEdition === 'base' ? '#7b2fbe' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {selectedEdition === 'base' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#FFF' }} />}
+                </div>
+              </div>
+              <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '12px', margin: '0 0 16px 0', lineHeight: '1.4' }}>Versão digital padrão contendo o jogo completo de forma imediata.</p>
+              <div style={{ marginTop: 'auto', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                <span style={{ fontSize: '22px', fontWeight: 800 }}>{priceBaseStr}</span>
+              </div>
+            </div>
+
+            <div onClick={() => setSelectedEdition('dlc')} style={{ backgroundColor: '#0c0c12', borderRadius: '16px', border: `2px solid ${selectedEdition === 'dlc' ? '#7b2fbe' : 'rgba(255,255,255,0.03)'}`, padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', boxShadow: selectedEdition === 'dlc' ? '0 0 25px rgba(123, 47, 190, 0.3)' : 'none' }}>
+              <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '2/3', marginBottom: '16px', backgroundColor: '#060609' }}>
+                <img src={coverDlc} alt="Complete" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = leftBgAlt; }} />
                 <span style={{ position: 'absolute', top: '12px', right: '12px', backgroundColor: '#7b2fbe', color: '#FFF', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 700 }}>RECOMENDADO</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>Jogo Base + DLC</h3>
-                <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #7b2fbe', backgroundColor: '#7b2fbe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#FFF' }} />
+                <h3 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>Jogo Base + DLCs</h3>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${selectedEdition === 'dlc' ? '#7b2fbe' : 'rgba(255,255,255,0.2)'}`, backgroundColor: selectedEdition === 'dlc' ? '#7b2fbe' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {selectedEdition === 'dlc' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#FFF' }} />}
                 </div>
               </div>
-              <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '12px', margin: '0 0 16px 0', lineHeight: '1.4' }}>Inclui o jogo completo + todas as expansões e DLCs disponíveis.</p>
+              <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '12px', margin: '0 0 16px 0', lineHeight: '1.4' }}>Acompanha todas as expansões, pacotes adicionais e bônus Deluxe lançados.</p>
               <div style={{ marginTop: 'auto', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ fontSize: '22px', fontWeight: 800 }}>{priceBaseStr}</span>
+                <span style={{ fontSize: '22px', fontWeight: 800 }}>{priceDlcStr}</span>
               </div>
             </div>
           </div>
@@ -2685,79 +2699,39 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
         ))}
       </div>
 
-      {/* Body — Sucesso */}
-      <div style={{ maxWidth:520, margin:'0 auto', padding:'32px 20px 60px', boxSizing:'border-box' }}>
-
-        {/* Agradecimento */}
-        <div style={{ background:'linear-gradient(135deg,#1a1a2e,#16213e)', border:`1px solid rgba(123,47,190,0.5)`, borderRadius:20, padding:'28px 28px 24px', textAlign:'center', marginBottom:14, animation:'popIn 0.4s cubic-bezier(.34,1.56,.64,1)', boxShadow:'0 0 40px rgba(123,47,190,0.2)' }}>
-          <div style={{ width:70, height:70, borderRadius:'50%', background:'rgba(76,175,80,0.15)', border:'2px solid rgba(76,175,80,0.5)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', boxShadow:'0 0 20px rgba(76,175,80,0.3)' }}>
-            <CheckCircle size={34} color={C.green} />
+      {/* Body — Key gerada */}
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 60px', boxSizing: 'border-box' }}>
+        <div style={{ background:'#1a1a1a', border:`1px solid ${C.primary}`, borderRadius:16, padding:32, textAlign:'center', boxSizing:'border-box', animation:'popIn 0.35s ease' }}>
+          <div style={{ width:68, height:68, borderRadius:'50%', background:'rgba(76,175,80,0.15)', border:'2px solid rgba(76,175,80,0.4)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+            <CheckCircle size={32} color={C.green} />
           </div>
-          <h2 style={{ fontSize:22, fontWeight:900, color:'#fff', marginBottom:10 }}>Compra realizada com sucesso! 🎉</h2>
-          <p style={{ color:'#bbb', fontSize:14, lineHeight:1.7, marginBottom:4 }}>
-            Muito obrigado por comprar com a gente! Sua confiança significa tudo para nós.<br/>
-            <strong style={{ color:C.secondary }}>{effectiveItem.title}</strong> é seu — agora é só resgatar.
+          <h2 style={{ fontSize:22, fontWeight:900, color:'#fff', marginBottom:6 }}>Pagamento aprovado!</h2>
+          <p style={{ color:'#888', fontSize:14, marginBottom:24 }}>
+            Sua chave de <strong style={{ color:C.secondary }}>{effectiveItem.title}</strong> já está disponível abaixo.
           </p>
-        </div>
 
-        {/* Código de resgate */}
-        <div style={{ background:'rgba(123,47,190,0.08)', border:`1px solid rgba(199,125,255,0.35)`, borderRadius:14, padding:'18px 20px', marginBottom:14, boxShadow:'0 0 20px rgba(123,47,190,0.15)' }}>
-          <p style={{ color:C.textMuted, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'1px', marginBottom:8 }}>
-            🎫 Seu código de resgate
-          </p>
-          <div style={{ display:'flex', gap:10, alignItems:'center', background:'rgba(0,0,0,0.4)', borderRadius:10, padding:'12px 16px', marginBottom:10 }}>
-            <span style={{ flex:1, fontFamily:'monospace', fontSize:15, fontWeight:800, color:C.accent, letterSpacing:'2px', wordBreak:'break-all' }}>{gameKey}</span>
+          {/* Card da Key — mesmo estilo do bloco do Pix */}
+          <div style={{ background:'#111', border:'1px solid #2a2a2a', borderRadius:10, padding:'16px', marginBottom:16, boxSizing:'border-box' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, color:C.textMuted, fontSize:12, marginBottom:10 }}>
+              <Key size={14} /> Sua Chave de Ativação (Steam Key)
+            </div>
+            <div style={{ display:'flex', gap:8, background:'#0a0a0a', border:`1px solid ${C.border}`, borderRadius:8, padding:'12px 14px', alignItems:'center' }}>
+              <div style={{ flex:1, fontSize:16, fontWeight:700, letterSpacing:'1px', color:C.accent, fontFamily:'monospace', wordBreak:'break-all', textAlign:'left' }}>{gameKey}</div>
+            </div>
+            <button onClick={handleCopyKey} style={{ width:'100%', marginTop:10, background: keyCopied ? C.green : C.primary, border:'none', color:'white', borderRadius:8, padding:'11px', fontSize:14, fontWeight:700, cursor:'pointer' }}>
+              {keyCopied ? 'Copiada!' : 'Copiar chave'}
+            </button>
           </div>
-          <button onClick={handleCopyKey}
-            style={{ width:'100%', padding:'11px', borderRadius:10, background: keyCopied ? C.green : `linear-gradient(135deg,${C.primary},${C.secondary})`, border:'none', color:'white', fontWeight:700, fontSize:14, cursor:'pointer', transition:'all 0.2s', boxShadow: keyCopied ? '0 0 20px rgba(76,175,80,0.4)' : '0 0 16px rgba(123,47,190,0.35)' }}>
-            {keyCopied ? '✓ Copiado!' : '📋 Copiar código'}
+
+          <p style={{ color:'#666', fontSize:12, lineHeight:1.6, marginBottom:24 }}>
+            Guarde essa chave com cuidado. Ela também ficará disponível a qualquer momento em <strong style={{ color:'#999' }}>Minhas Compras</strong>.
+          </p>
+
+          <button onClick={onClose}
+            style={{ width:'100%', padding:'14px', borderRadius:10, background:C.primary, border:'none', color:'white', fontWeight:700, fontSize:15, cursor:'pointer' }}>
+            Voltar para a Loja
           </button>
-          <p style={{ color:'#555', fontSize:11, marginTop:8, textAlign:'center' }}>
-            Este código também estará disponível em <strong style={{ color:'#888' }}>Minhas Compras</strong>
-          </p>
         </div>
-
-        {/* Card Discord */}
-        <div style={{ background:'#111', border:'1px solid #1e1e1e', borderRadius:16, padding:'22px 24px', marginBottom:14 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-            <div style={{ width:38, height:38, borderRadius:10, background:'#5865F2', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <svg width="20" height="20" viewBox="0 0 71 55" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.5.7a40 40 0 0 0-1.8 3.6 54 54 0 0 0-16.3 0A40 40 0 0 0 25.6.7 58.3 58.3 0 0 0 11 4.9C1.6 19 -1 32.7.3 46.3a58.9 58.9 0 0 0 17.9 9 42 42 0 0 0 3.7-6 38.3 38.3 0 0 1-5.9-2.8l1.4-1.1a42 42 0 0 0 36.2 0l1.4 1.1a38.5 38.5 0 0 1-5.9 2.8 42 42 0 0 0 3.7 6A58.7 58.7 0 0 0 70.7 46C72.3 30.2 68 16.6 60.1 4.9ZM23.7 37.8c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.3 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Z"/></svg>
-            </div>
-            <div>
-              <p style={{ color:'white', fontWeight:800, fontSize:15, marginBottom:1 }}>Como pegar sua Steam Key?</p>
-              <p style={{ color:'#555', fontSize:12 }}>É simples e rápido — siga os passos abaixo</p>
-            </div>
-          </div>
-
-          <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:18 }}>
-            {[
-              { n:'1', text:'Entre no nosso servidor do Discord pelo botão abaixo' },
-              { n:'2', text:'Vá até o canal de tickets e abra um na aba COMPRAS' },
-              { n:'3', text:'Envie o código de resgate acima no ticket' },
-              { n:'4', text:'Nossa equipe entrega sua Steam Key em instantes!' },
-            ].map((s, i) => (
-              <div key={i} style={{ display:'flex', gap:12, alignItems:'center' }}>
-                <div style={{ width:26, height:26, borderRadius:'50%', background:`linear-gradient(135deg,${C.primary},${C.secondary})`, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:12, color:'white', flexShrink:0 }}>{s.n}</div>
-                <p style={{ color:'#aaa', fontSize:13, lineHeight:1.4, margin:0 }}>{s.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <a href="https://discord.gg/ZqZSYv32xY" target="_blank" rel="noopener noreferrer"
-            style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, width:'100%', padding:'13px', borderRadius:11, background:'#5865F2', border:'none', color:'white', fontWeight:700, fontSize:15, cursor:'pointer', textDecoration:'none', boxShadow:'0 4px 18px rgba(88,101,242,0.45)', transition:'all 0.2s' }}
-            onMouseEnter={e=>(e.currentTarget as HTMLAnchorElement).style.transform='translateY(-2px)'}
-            onMouseLeave={e=>(e.currentTarget as HTMLAnchorElement).style.transform='translateY(0)'}>
-            <svg width="20" height="20" viewBox="0 0 71 55" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.5.7a40 40 0 0 0-1.8 3.6 54 54 0 0 0-16.3 0A40 40 0 0 0 25.6.7 58.3 58.3 0 0 0 11 4.9C1.6 19 -1 32.7.3 46.3a58.9 58.9 0 0 0 17.9 9 42 42 0 0 0 3.7-6 38.3 38.3 0 0 1-5.9-2.8l1.4-1.1a42 42 0 0 0 36.2 0l1.4 1.1a38.5 38.5 0 0 1-5.9 2.8 42 42 0 0 0 3.7 6A58.7 58.7 0 0 0 70.7 46C72.3 30.2 68 16.6 60.1 4.9ZM23.7 37.8c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.3 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Z"/></svg>
-            Entrar no Discord agora
-          </a>
-        </div>
-
-        <button onClick={onClose}
-          style={{ width:'100%', padding:'12px', borderRadius:11, background:'transparent', border:`1px solid ${C.border}`, color:'#777', fontWeight:600, fontSize:14, cursor:'pointer', transition:'all 0.2s' }}
-          onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=C.secondary;(e.currentTarget as HTMLButtonElement).style.color='white'}}
-          onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=C.border;(e.currentTarget as HTMLButtonElement).style.color='#777'}}>
-          Voltar para a Loja
-        </button>
       </div>
     </div>
   );
