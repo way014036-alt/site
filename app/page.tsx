@@ -93,7 +93,7 @@ const FEATURED: FeaturedGame[] = [
   { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
   { id:3, appId:1091500, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', badge:'Premiado', description:'Cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social.', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
   { id:4, appId:3357650, title:'Pragmata', youtubeId:'oncaa_fMsyw', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
-  { id:5, appId:2215200, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://legobatmangame.com/_astro/og-image.BcIYb3Fq.jpg' },
+  { id:5, appId:2215200, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2215200/a07a9a6c0c9c1225f5b260b4f29fe40e6f099f6b/header.jpg' },
   { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
 ];
 
