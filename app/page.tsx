@@ -93,8 +93,8 @@ const FEATURED: FeaturedGame[] = [
   { id:2, appId:2050650, title:'Resident Evil 4 Remake', youtubeId:'9iy6gHDKvzA', badge:'Mais Vendido', description:'Sobrevivência é apenas o começo. Seis anos após o desastre biológico em Raccoon City.', cover:'https://i.ytimg.com/vi/9iy6gHDKvzA/maxresdefault.jpg' },
   { id:3, appId:1091500, title:'Cyberpunk 2077', youtubeId:'8X2kIfS6fb8', badge:'Premiado', description:'Cyberpunk é um subgênero da ficção científica e um movimento cultural que se passa em futuros distópicos onde a tecnologia avançada contrasta com a degradação social.', cover:'https://i.ytimg.com/vi/8X2kIfS6fb8/maxresdefault.jpg' },
   { id:4, appId:3357650, title:'Pragmata', youtubeId:'oncaa_fMsyw', badge:'Em Destaque', description:'Uma jornada épica de ficção científica desenvolvida pela Capcom. Explore uma Lua misteriosa.', cover:'https://i.ytimg.com/vi/oncaa_fMsyw/maxresdefault.jpg' },
-  { id:5, appId:2215200, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2215200/a07a9a6c0c9c1225f5b260b4f29fe40e6f099f6b/header.jpg' },
-  { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/3768760/dbe86ebd2edb4c77d113e9e2feefeb90189fabc9/header.jpg' },
+  { id:5, appId:2215200, title:'Lego Batman', youtubeId:'j5ha2VwHJCw', badge:'Novo Lançamento', description:'Construa, destrua e lute na mais nova aventura do Cavaleiro das Trevas em formato LEGO.', cover:'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg' },
+  { id:6, appId:2929460, title:'007 First Light', youtubeId:'J4qY9DYE184', badge:'Ação Espionagem', description:'Descubra a história definitiva de origem do espião mais famoso do mundo.', cover:'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg' },
 ];
 
 const CATEGORIES = ['Todos','Ação','RPG','FPS','Aventura','Estratégia','Indie','Simulação','Terror','Esportes'];
@@ -1113,18 +1113,12 @@ const COVER_PLACEHOLDER =
 // Manual overrides for games whose Steam library_600x900.jpg is unavailable
 // at the standard CDN path (newer titles use hashed asset URLs).
 const COVER_OVERRIDES: Record<number, string> = {
-  // LEGO Batman: Legacy of the Dark Knight
-  2215200: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2215200/a07a9a6c0c9c1225f5b260b4f29fe40e6f099f6b/header.jpg',
-  2929460: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/3768760/dbe86ebd2edb4c77d113e9e2feefeb90189fabc9/header.jpg',
-  // Resident Evil Requiem
+  2215200: 'https://i.ytimg.com/vi/j5ha2VwHJCw/maxresdefault.jpg',
+  2929460: 'https://i.ytimg.com/vi/J4qY9DYE184/maxresdefault.jpg',
   3764200: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3764200/ce5437442768e38eb575f205ab9397d0264017b0/header.jpg',
-  // Escape from Tarkov
   3932890: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3932890/e6bcff9e3787f9fc19e46dc06c12c841cf3d4cb7/header_alt_assets_0.jpg',
-  // The Elder Scrolls IV: Oblivion Remastered (library_600x900 indisponível no CDN padrão)
   2623190: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2623190/67e60b0125feb2f0cc6964f0acb785faf1207fbd/capsule_616x353.jpg',
-  // Grounded 2
   2661300: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2661300/a9f02144893a4bad56c7333c068e9ae2e28da52d/capsule_616x353.jpg',
-  // 33 Immortals
   958520: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/958520/6a481853b8b2effa7639abdd856b7f7af32b7358/capsule_616x353.jpg',
 };
 
