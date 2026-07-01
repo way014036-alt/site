@@ -1987,7 +1987,7 @@ const ProductPageModal: React.FC<ProductPageModalProps> = ({ item, onClose, onCo
     : fallbackHero;
 
   const leftBgAlt = item.appId
-    ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.appId}/header.jpg`
+    ? coverImg(item.appId)
     : fallbackHero;
 
   const coverBase = item.appId 
@@ -2649,7 +2649,7 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
   }, []);
 
   const coverUrl = effectiveItem.appId
-    ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${effectiveItem.appId}/header.jpg`
+    ? coverImg(effectiveItem.appId)
     : '';
 
   if (done) return (
@@ -2922,7 +2922,7 @@ function CheckoutModal({ item, cartItems, onClose, accountEmail, accountName, on
                 <div key={ci.cartId} style={{ display:'flex', alignItems:'center', gap:12 }}>
                   <div style={{ width:42, height:42, borderRadius:8, overflow:'hidden', flexShrink:0, background:'#0d1a2a' }}>
                     {ci.appId && (
-                      <img src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${ci.appId}/header.jpg`} alt={ci.title}
+                      <img src={coverImg(ci.appId)} alt={ci.title}
                         style={{ width:'100%', height:'100%', objectFit:'cover' }}
                         onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
                     )}
@@ -3021,7 +3021,7 @@ function CartModal({
               {items.map(ci => {
                 const unitPrice = parsePriceStr(ci.price);
                 const coverUrl = ci.appId
-                  ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${ci.appId}/header.jpg`
+                  ? coverImg(ci.appId)
                   : '';
                 return (
                   <div key={ci.cartId} style={{ display:'flex', gap:12, background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, padding:12 }}>
